@@ -1,0 +1,136 @@
+# ============================================================================
+# Local self-hosted Supabase stack for BidLik
+# Usage:
+#   cp .env.example .env  &&  edit values
+#   docker compose up -d
+#   ./migrate/run.sh                  # applies supabase/migrations/*.sql
+# Then set your app's VITE_SUPABASE_URL to http://localhost:8000
+# and VITE_SUPABASE_PUBLISHABLE_KEY to ANON_KEY from .env
+# ============================================================================
+name: bidlik-local
+
+services:
+  db:
+    image: supabase/postgres:15.6.1.146
+    restart: unless-stopped
+    ports:
+      - "${POSTGRES_PORT:-54322}:5432"
+    environment:
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB:-postgres}
+      JWT_SECRET: ${JWT_SECRET}
+      JWT_EXP: 3600
+    volumes:
+      - db-data:/var/lib/postgresql/data
+      - ./init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d ${POSTGRES_DB:-postgres}"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  auth:
+    image: supabase/gotrue:v2.158.1
+    depends_on:
+      db: { condition: service_healthy }
+    restart: unless-stopped
+    environment:
+      GOTRUE_API_HOST: 0.0.0.0
+      GOTRUE_API_PORT: 9999
+      API_EXTERNAL_URL: ${API_EXTERNAL_URL:-http://localhost:8000}
+      GOTRUE_DB_DRIVER: postgres
+      GOTRUE_DB_DATABASE_URL: postgres://supabase_auth_admin:${AUTH_ADMIN_PASSWORD}@db:5432/${POSTGRES_DB:-postgres}
+      GOTRUE_SITE_URL: ${SITE_URL:-http://localhost:8080}
+      GOTRUE_URI_ALLOW_LIST: ${SITE_URL:-http://localhost:8080}
+      GOTRUE_DISABLE_SIGNUP: "false"
+      GOTRUE_JWT_SECRET: ${JWT_SECRET}
+      GOTRUE_JWT_EXP: 3600
+      GOTRUE_JWT_DEFAULT_GROUP_NAME: authenticated
+      GOTRUE_MAILER_AUTOCONFIRM: "true"
+      GOTRUE_EXTERNAL_EMAIL_ENABLED: "true"
+      GOTRUE_EXTERNAL_PHONE_ENABLED: "false"
+    ports:
+      - "9999:9999"
+
+  rest:
+    image: postgrest/postgrest:v12.2.3
+    depends_on:
+      db: { condition: service_healthy }
+    restart: unless-stopped
+    environment:
+      PGRST_DB_URI: postgres://authenticator:${AUTHENTICATOR_PASSWORD}@db:5432/${POSTGRES_DB:-postgres}
+      PGRST_DB_SCHEMAS: public,storage
+      PGRST_DB_ANON_ROLE: anon
+      PGRST_JWT_SECRET: ${JWT_SECRET}
+      PGRST_DB_USE_LEGACY_GUCS: "false"
+    ports:
+      - "3000:3000"
+
+  storage:
+    image: supabase/storage-api:v1.11.13
+    depends_on:
+      db: { condition: service_healthy }
+      rest: { condition: service_started }
+    restart: unless-stopped
+    environment:
+      ANON_KEY: ${ANON_KEY}
+      SERVICE_KEY: ${SERVICE_ROLE_KEY}
+      POSTGREST_URL: http://rest:3000
+      PGRST_JWT_SECRET: ${JWT_SECRET}
+      DATABASE_URL: postgres://supabase_storage_admin:${STORAGE_ADMIN_PASSWORD}@db:5432/${POSTGRES_DB:-postgres}
+      FILE_SIZE_LIMIT: "52428800"
+      STORAGE_BACKEND: file
+      FILE_STORAGE_BACKEND_PATH: /var/lib/storage
+      TENANT_ID: local
+      REGION: local
+      GLOBAL_S3_BUCKET: local
+    volumes:
+      - storage-data:/var/lib/storage
+    ports:
+      - "5000:5000"
+
+  kong:
+    image: kong:3.4
+    depends_on: [auth, rest, storage]
+    restart: unless-stopped
+    environment:
+      KONG_DATABASE: "off"
+      KONG_DECLARATIVE_CONFIG: /kong.yml
+      KONG_DNS_ORDER: LAST,A,CNAME
+      KONG_PLUGINS: request-transformer,cors,key-auth,acl
+    volumes:
+      - ./kong/kong.yml:/kong.yml:ro
+    ports:
+      - "${KONG_HTTP_PORT:-8000}:8000"
+
+  studio:
+    image: supabase/studio:20240923-2e3e90a
+    depends_on: [db, rest]
+    restart: unless-stopped
+    environment:
+      STUDIO_PG_META_URL: http://meta:8080
+      SUPABASE_URL: http://kong:8000
+      SUPABASE_ANON_KEY: ${ANON_KEY}
+      SUPABASE_SERVICE_KEY: ${SERVICE_ROLE_KEY}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      DEFAULT_ORGANIZATION_NAME: BidLik
+      DEFAULT_PROJECT_NAME: bidlik-local
+    ports:
+      - "3001:3000"
+
+  meta:
+    image: supabase/postgres-meta:v0.83.2
+    depends_on:
+      db: { condition: service_healthy }
+    restart: unless-stopped
+    environment:
+      PG_META_PORT: 8080
+      PG_META_DB_HOST: db
+      PG_META_DB_PORT: 5432
+      PG_META_DB_NAME: ${POSTGRES_DB:-postgres}
+      PG_META_DB_USER: postgres
+      PG_META_DB_PASSWORD: ${POSTGRES_PASSWORD}
+
+volumes:
+  db-data:
+  storage-data:

@@ -1,0 +1,1 @@
+GRANT EXECUTE ON FUNCTION public.list_auction_bids(text) TO anon;

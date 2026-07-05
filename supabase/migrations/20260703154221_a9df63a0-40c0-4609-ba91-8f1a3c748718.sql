@@ -1,0 +1,1 @@
+ALTER TABLE public.cars ADD COLUMN IF NOT EXISTS expert_images jsonb NOT NULL DEFAULT '[]'::jsonb;

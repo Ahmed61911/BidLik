@@ -1,0 +1,65 @@
+_format_version: "3.0"
+_transform: true
+
+services:
+  - name: auth-v1
+    url: http://auth:9999/
+    routes:
+      - name: auth-v1-route
+        strip_path: true
+        paths: [/auth/v1]
+    plugins:
+      - name: cors
+
+  - name: rest-v1
+    url: http://rest:3000/
+    routes:
+      - name: rest-v1-route
+        strip_path: true
+        paths: [/rest/v1]
+    plugins:
+      - name: cors
+
+  - name: storage-v1
+    url: http://storage:5000/
+    routes:
+      - name: storage-v1-route
+        strip_path: true
+        paths: [/storage/v1]
+    plugins:
+      - name: cors
+
+  - name: realtime-v1
+    url: http://realtime:4000/socket/
+    routes:
+      - name: realtime-v1-route
+        strip_path: true
+        paths: [/realtime/v1]
+    plugins:
+      - name: cors
+      # Realtime (Phoenix/Elixir) resolves its multi-tenant "tenant" from the
+      # HTTP Host header of the incoming request — NOT from the apikey or any
+      # path segment. Kong's default proxy behavior rewrites the Host header
+      # to match the upstream it's forwarding to ("realtime", from the `url`
+      # above), which doesn't match the tenant seeded by SEED_SELF_HOST=true
+      # ("realtime-dev" — see docker-compose.yml's realtime service). Every
+      # websocket upgrade was silently failing with 403 Forbidden as a result
+      # — confirmed via `docker logs bidlik-local-realtime-1` showing
+      # "TenantNotFound: Tenant not found: realtime" on every connection
+      # attempt, and reproduced directly against the realtime container with
+      # curl: forcing `Host: realtime-dev` returns 101 Switching Protocols,
+      # the unmodified request returns 403. This plugin rewrites the Host
+      # header to the correct tenant before Kong proxies the request.
+      - name: request-transformer
+        config:
+          replace:
+            headers: ["Host:realtime-dev"]
+
+  - name: functions-v1
+    url: http://functions:9000/
+    routes:
+      - name: functions-v1-route
+        strip_path: true
+        paths: [/functions/v1]
+    plugins:
+      - name: cors

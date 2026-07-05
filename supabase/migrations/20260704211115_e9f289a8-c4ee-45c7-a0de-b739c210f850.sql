@@ -1,0 +1,1 @@
+GRANT EXECUTE ON FUNCTION public.get_my_won_car_details(text) TO authenticated, anon;

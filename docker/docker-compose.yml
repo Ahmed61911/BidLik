@@ -1,0 +1,301 @@
+# ============================================================================
+# Local self-hosted Supabase stack for BidLik — full official-parity profile.
+#
+# Usage:
+#   cd docker
+#   cp .env.example .env      # then run: node ../docker/gen-keys.cjs
+#   docker compose up -d
+#   ./migrate/run.sh          # applies supabase/migrations/*.sql + seeds buckets
+#
+# Services (all from the official Supabase self-hosting images):
+#   db        Postgres 15 (supabase/postgres — ships auth/storage/realtime
+#             schemas, roles, and the supabase_realtime publication out of
+#             the box; see docker/init/00_extensions_and_roles.sql for what
+#             this compose still needs to add on top).
+#   auth      GoTrue — email/password auth, JWT issuance.
+#   rest      PostgREST — table CRUD + RPC over HTTP.
+#   realtime  Postgres-changes / broadcast / presence over WebSocket.
+#   storage   Storage API — UNUSED by the app as of the local-filesystem
+#             storage migration (see src/lib/storage). Uploaded files now
+#             live on the "storage-files" volume, served by the app's own
+#             /api/storage/* routes. Kept running for official-stack parity
+#             and because the "car-images"/"payment-proofs" bucket rows are
+#             still seeded by migrate/run.sh; safe to remove from a
+#             production compose if you want a smaller footprint.
+#   imgproxy  On-the-fly image transforms for Storage — unused for the same
+#             reason as `storage` above.
+#   meta      postgres-meta — DB introspection, used by Studio.
+#   studio    Supabase Studio admin UI.
+#   kong      API gateway — single entry point at :8000 for auth/rest/
+#             storage/realtime/functions.
+#   functions Edge Runtime (Deno) — present for parity; the app ships no
+#             Edge Functions today (see supabase/functions/hello for a
+#             placeholder so the container has something to serve).
+#   app       The TanStack Start app itself, dev-mode, so `docker compose up`
+#             starts the whole project with one command (see Dockerfile at
+#             the repo root for why this runs `bun run dev`, not a prod build).
+#
+# Deliberately NOT included: Analytics/Logflare (needs its own Postgres +
+# BigQuery-shaped storage and isn't read by any app code — see docs).
+# ============================================================================
+name: bidlik-local
+
+services:
+  db:
+    image: supabase/postgres:15.6.1.146
+    restart: unless-stopped
+    ports:
+      - "${POSTGRES_PORT:-54322}:5432"
+    environment:
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB:-postgres}
+      JWT_SECRET: ${JWT_SECRET}
+      JWT_EXP: 3600
+    volumes:
+      - db-data:/var/lib/postgresql/data
+      # Mounted as an individual file (NOT the whole ./init dir onto
+      # /docker-entrypoint-initdb.d) — see zz_bidlik_setup.sh for why.
+      - ./init/zz_bidlik_setup.sh:/docker-entrypoint-initdb.d/zz_bidlik_setup.sh:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d ${POSTGRES_DB:-postgres}"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+
+  auth:
+    image: supabase/gotrue:v2.158.1
+    depends_on:
+      db: { condition: service_healthy }
+    restart: unless-stopped
+    environment:
+      GOTRUE_API_HOST: 0.0.0.0
+      GOTRUE_API_PORT: 9999
+      API_EXTERNAL_URL: ${API_EXTERNAL_URL:-http://localhost:8000}
+      GOTRUE_DB_DRIVER: postgres
+      GOTRUE_DB_DATABASE_URL: postgres://supabase_auth_admin:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB:-postgres}
+      GOTRUE_SITE_URL: ${SITE_URL:-http://localhost:8080}
+      GOTRUE_URI_ALLOW_LIST: ${SITE_URL:-http://localhost:8080}
+      GOTRUE_DISABLE_SIGNUP: "false"
+      GOTRUE_JWT_SECRET: ${JWT_SECRET}
+      GOTRUE_JWT_EXP: 3600
+      GOTRUE_JWT_DEFAULT_GROUP_NAME: authenticated
+      GOTRUE_MAILER_AUTOCONFIRM: "true"
+      GOTRUE_EXTERNAL_EMAIL_ENABLED: "true"
+      GOTRUE_EXTERNAL_PHONE_ENABLED: "false"
+    ports:
+      - "9999:9999"
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:9999/health"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  rest:
+    image: postgrest/postgrest:v12.2.3
+    depends_on:
+      db: { condition: service_healthy }
+    restart: unless-stopped
+    environment:
+      PGRST_DB_URI: postgres://authenticator:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB:-postgres}
+      PGRST_DB_SCHEMAS: public,storage
+      PGRST_DB_ANON_ROLE: anon
+      PGRST_JWT_SECRET: ${JWT_SECRET}
+      PGRST_DB_USE_LEGACY_GUCS: "false"
+    ports:
+      - "3000:3000"
+
+  realtime:
+    image: supabase/realtime:v2.30.34
+    depends_on:
+      db: { condition: service_healthy }
+    restart: unless-stopped
+    environment:
+      PORT: 4000
+      DB_HOST: db
+      DB_PORT: "5432"
+      DB_USER: supabase_admin
+      DB_PASSWORD: ${POSTGRES_PASSWORD}
+      DB_NAME: ${POSTGRES_DB:-postgres}
+      DB_AFTER_CONNECT_QUERY: "SET search_path TO _realtime"
+      DB_ENC_KEY: supabaserealtime
+      API_JWT_SECRET: ${JWT_SECRET}
+      SECRET_KEY_BASE: ${REALTIME_SECRET_KEY_BASE}
+      ERL_AFLAGS: -proto_dist inet_tcp
+      DNS_NODES: "''"
+      RLIMIT_NOFILE: "10000"
+      APP_NAME: realtime
+      SEED_SELF_HOST: "true"
+      RUN_JANITOR: "true"
+    ports:
+      - "4000:4000"
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "curl",
+          "-sSfL",
+          "--head",
+          "-o",
+          "/dev/null",
+          "-H",
+          "Authorization: Bearer ${ANON_KEY}",
+          "http://localhost:4000/api/tenants/realtime-dev/health",
+        ]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  imgproxy:
+    image: darthsim/imgproxy:v3.8.0
+    restart: unless-stopped
+    environment:
+      IMGPROXY_BIND: ":5001"
+      IMGPROXY_LOCAL_FILESYSTEM_ROOT: /
+      IMGPROXY_USE_ETAG: "true"
+      IMGPROXY_ENABLE_WEBP_DETECTION: "true"
+    volumes:
+      - storage-data:/var/lib/storage:ro
+
+  storage:
+    image: supabase/storage-api:v1.11.13
+    depends_on:
+      db: { condition: service_healthy }
+      rest: { condition: service_started }
+      imgproxy: { condition: service_started }
+    restart: unless-stopped
+    environment:
+      ANON_KEY: ${ANON_KEY}
+      SERVICE_KEY: ${SERVICE_ROLE_KEY}
+      POSTGREST_URL: http://rest:3000
+      PGRST_JWT_SECRET: ${JWT_SECRET}
+      DATABASE_URL: postgres://supabase_storage_admin:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB:-postgres}
+      FILE_SIZE_LIMIT: "52428800"
+      STORAGE_BACKEND: file
+      FILE_STORAGE_BACKEND_PATH: /var/lib/storage
+      TENANT_ID: local
+      REGION: local
+      GLOBAL_S3_BUCKET: local
+      ENABLE_IMAGE_TRANSFORMATION: "true"
+      IMGPROXY_URL: http://imgproxy:5001
+    volumes:
+      - storage-data:/var/lib/storage
+    ports:
+      - "5000:5000"
+
+  meta:
+    image: supabase/postgres-meta:v0.83.2
+    depends_on:
+      db: { condition: service_healthy }
+    restart: unless-stopped
+    environment:
+      PG_META_PORT: 8080
+      PG_META_DB_HOST: db
+      PG_META_DB_PORT: 5432
+      PG_META_DB_NAME: ${POSTGRES_DB:-postgres}
+      PG_META_DB_USER: postgres
+      PG_META_DB_PASSWORD: ${POSTGRES_PASSWORD}
+
+  functions:
+    image: supabase/edge-runtime:v1.74.2
+    restart: unless-stopped
+    environment:
+      JWT_SECRET: ${JWT_SECRET}
+      SUPABASE_URL: http://kong:8000
+      SUPABASE_ANON_KEY: ${ANON_KEY}
+      SUPABASE_SERVICE_ROLE_KEY: ${SERVICE_ROLE_KEY}
+      SUPABASE_DB_URL: postgres://postgres:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB:-postgres}
+      VERIFY_JWT: "false"
+    volumes:
+      - ../supabase/functions:/home/deno/functions:ro
+    command: ["start", "--main-service", "/home/deno/functions/hello"]
+
+  kong:
+    image: kong:3.4
+    depends_on: [auth, rest, storage, realtime]
+    restart: unless-stopped
+    environment:
+      KONG_DATABASE: "off"
+      KONG_DECLARATIVE_CONFIG: /kong.yml
+      KONG_DNS_ORDER: LAST,A,CNAME
+      KONG_PLUGINS: request-transformer,cors,key-auth,acl
+    volumes:
+      - ./kong/kong.yml:/kong.yml:ro
+    ports:
+      - "${KONG_HTTP_PORT:-8000}:8000"
+
+  studio:
+    # Pinned historical tags get pruned from Docker Hub over time (verified:
+    # 20240923-2e3e90a 404s as of this writing) — `latest` is the pragmatic
+    # choice for a dev-only admin UI; pin a digest if you need reproducibility.
+    image: supabase/studio:latest
+    depends_on: [db, rest]
+    restart: unless-stopped
+    environment:
+      STUDIO_PG_META_URL: http://meta:8080
+      SUPABASE_URL: http://kong:8000
+      SUPABASE_ANON_KEY: ${ANON_KEY}
+      SUPABASE_SERVICE_KEY: ${SERVICE_ROLE_KEY}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      DEFAULT_ORGANIZATION_NAME: BidLik
+      DEFAULT_PROJECT_NAME: bidlik-local
+    ports:
+      - "3001:3000"
+
+  app:
+    build:
+      context: ..
+      dockerfile: Dockerfile
+      # "dev" here (not "prod") since this compose file is for local
+      # development. For the OVH VPS, build with --target prod instead —
+      # see docs/LOCAL_STORAGE.md for the production compose variant.
+      target: dev
+    depends_on: [kong]
+    restart: unless-stopped
+    environment:
+      # kong.bidlik.local is a made-up hostname, not "localhost" — see the
+      # note below on why a real hostname is required here.
+      VITE_SUPABASE_URL: http://kong.bidlik.local:${KONG_HTTP_PORT:-8000}
+      VITE_SUPABASE_PUBLISHABLE_KEY: ${ANON_KEY}
+      VITE_SUPABASE_PROJECT_ID: local
+      SUPABASE_URL: http://kong.bidlik.local:${KONG_HTTP_PORT:-8000}
+      SUPABASE_PUBLISHABLE_KEY: ${ANON_KEY}
+      SUPABASE_SERVICE_ROLE_KEY: ${SERVICE_ROLE_KEY}
+      ALLOW_DEMO_SEED: "true"
+      # Local filesystem storage (replaces Supabase Storage — see
+      # src/lib/storage). STORAGE_ROOT is a path *inside this container*,
+      # backed by the "storage-files" named volume below so uploads survive
+      # container recreation/image rebuilds.
+      STORAGE_ROOT: /storage
+      STORAGE_SIGNING_SECRET: ${STORAGE_SIGNING_SECRET}
+      APP_ORIGIN: http://localhost:${APP_PORT:-8080}
+    volumes:
+      - storage-files:/storage
+    extra_hosts:
+      # Makes "kong.bidlik.local" resolve to the Docker host's gateway IP
+      # FROM INSIDE this container, so SSR code running here can reach Kong's
+      # host-published port. (Docker Desktop / Engine 20.10+ feature.)
+      #
+      # IMPORTANT: this container serves ~all pages correctly out of the box
+      # (data fetching is client-side almost everywhere in this app — see
+      # docs/LOCAL_SUPABASE.md "Known limitation" section). The handful of
+      # public pages that use an SSR loader (auctions/events index & detail)
+      # additionally need the HOST browser to ALSO resolve
+      # "kong.bidlik.local" to 127.0.0.1, which Docker cannot do for you on
+      # the host OS. Verified two options, pick one only if you need those
+      # specific pages' first SSR paint to work from inside this container:
+      #   1. Add "127.0.0.1  kong.bidlik.local" to your OS hosts file
+      #      (C:\Windows\System32\drivers\etc\hosts on Windows), or
+      #   2. Skip the `app` service entirely and run `bun install && bun run
+      #      dev` on the host instead (same .env works unmodified — this is
+      #      how this migration was actually verified end-to-end).
+      - "kong.bidlik.local:host-gateway"
+    ports:
+      - "${APP_PORT:-8080}:8080"
+
+volumes:
+  db-data:
+  storage-data:
+  # Uploaded files (car photos, expertise reports, payment proofs, identity
+  # docs, avatars) — see src/lib/storage. Persists across container
+  # recreation, image rebuilds, and deployments; never baked into the image.
+  storage-files:

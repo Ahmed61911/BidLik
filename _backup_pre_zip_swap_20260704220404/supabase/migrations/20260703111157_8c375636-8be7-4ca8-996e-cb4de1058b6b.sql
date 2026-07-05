@@ -1,0 +1,1 @@
+GRANT EXECUTE ON FUNCTION public.is_my_account_active() TO authenticated;

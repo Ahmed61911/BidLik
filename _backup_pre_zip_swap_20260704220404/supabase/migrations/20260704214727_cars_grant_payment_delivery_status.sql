@@ -1,0 +1,28 @@
+-- ============================================================================
+-- Merged from the upstream Lovable session's own troubleshooting of "cars"
+-- permission errors (two migrations there: one adding payment_status/
+-- delivery_status to the anon+authenticated column grant, a later one
+-- repeating it plus — accidentally — adding minimum_accepted_price to the
+-- ANON grant).
+--
+-- Taking the useful part only: payment_status/delivery_status are
+-- legitimate, low-sensitivity operational fields worth exposing (an
+-- anonymous visitor already learns "this car is sold" from cars.status;
+-- these two columns don't reveal anything materially more sensitive).
+--
+-- Deliberately NOT importing the minimum_accepted_price grant to anon: that
+-- is the sealed-auction reserve price, explicitly hidden from anonymous
+-- users by an earlier hardening migration (REVOKE SELECT
+-- (minimum_accepted_price, prix_plancher, prix_minimum, vendeur_id) ON cars
+-- FROM anon) for a real reason — it would let anyone browsing the public
+-- site see a seller's floor price ahead of bidding. Re-granting it looks
+-- like an accidental side effect of that session chasing an unrelated
+-- "permission denied for table cars" error (the actual cause of that error —
+-- verified in this branch — is the auctions_select_authenticated /
+-- cars_update_owner_or_admin RLS policies referencing cars.vendeur_id
+-- directly; see 20260704141927_fix_authenticated_rls_and_stats_types.sql —
+-- broadening cars' column grants doesn't touch that at all, since
+-- vendeur_id itself was never included in either of the upstream grants).
+-- ============================================================================
+
+GRANT SELECT (payment_status, delivery_status) ON public.cars TO anon, authenticated;
