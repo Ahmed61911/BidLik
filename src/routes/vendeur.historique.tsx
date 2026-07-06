@@ -74,7 +74,7 @@ function VendeurHistoriquePage() {
                       </span>
                     </div>
                     <div className="mt-3 grid gap-3 text-sm sm:grid-cols-4">
-                      <Info label="Prix attendu" value={formatMad(c.prixAttendu)} />
+                      <Info label="Prix plancher" value={formatMad(c.prixPlancher)} />
                       <Info
                         label="Prix final"
                         value={c.prixFinal ? formatMad(c.prixFinal) : "—"}

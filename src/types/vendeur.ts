@@ -21,7 +21,7 @@ export interface SellerCar {
   modele: string;
   annee: number;
   kilometrage: number;
-  prixAttendu: number;
+  prixPlancher: number;
   noteExpert: number | null;
   stage: SellerCarStage;
   soumisLe: string;
@@ -74,5 +74,5 @@ export interface SellerSubmitCarInput {
   couleurInterieur: string;
   puissanceFiscale: number;
   nombreCles: number;
-  prixAttendu: number;
+  prixPlancher: number;
 }

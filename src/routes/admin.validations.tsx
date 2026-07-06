@@ -9,9 +9,9 @@ import { formatMad } from "@/lib/format";
 import { DeadlineCountdown } from "@/components/DeadlineCountdown";
 
 type ValidationTier = "low" | "mid" | "high";
-function validationTier(prixFinal: number, prixAttendu: number): ValidationTier {
-  if (prixFinal < prixAttendu - 5000) return "low";
-  if (prixFinal > prixAttendu + 5000) return "high";
+function validationTier(prixFinal: number, prixPlancher: number): ValidationTier {
+  if (prixFinal < prixPlancher - 5000) return "low";
+  if (prixFinal > prixPlancher + 5000) return "high";
   return "mid";
 }
 function validationTierClass(tier: ValidationTier): string {
@@ -25,7 +25,7 @@ export const Route = createFileRoute("/admin/validations")({
 });
 
 const RAISON_LABEL: Record<PendingValidation["raison"], string> = {
-  ecart_prix: "Écart prix attendu",
+  ecart_prix: "Écart prix plancher",
   verification_paiement: "Vérification paiement",
   litige: "Litige",
   controle_qualite: "Contrôle qualité",
@@ -87,9 +87,9 @@ function AdminValidationsPage() {
         ) : (
           <ul className="space-y-3">
             {items.map((p) => {
-              const ecart = p.prixFinal - p.prixAttendu;
-              const ecartPct = (ecart / p.prixAttendu) * 100;
-              const tier = validationTier(p.prixFinal, p.prixAttendu);
+              const ecart = p.prixFinal - p.prixPlancher;
+              const ecartPct = (ecart / p.prixPlancher) * 100;
+              const tier = validationTier(p.prixFinal, p.prixPlancher);
               return (
                 <li key={p.auctionId} className="rounded-xl border border-border bg-card p-4 shadow-sm">
                   <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
@@ -114,7 +114,7 @@ function AdminValidationsPage() {
                         />
                       </div>
                       <p className="mt-2 text-xs text-muted-foreground">
-                        Terminée {p.termineLe} · attendu {formatMad(p.prixAttendu)}
+                        Terminée {p.termineLe} · plancher {formatMad(p.prixPlancher)}
                       </p>
                     </div>
                     <div className="flex shrink-0 items-center gap-2">

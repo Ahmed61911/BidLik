@@ -687,7 +687,7 @@ function BidBtn({
   );
 }
 
-function ExpertiseSection({
+export function ExpertiseSection({
   expertise,
   canPreviewPhotos,
 }: {
@@ -830,7 +830,7 @@ function ExpertiseSection({
 
       {!canPreviewPhotos && (
         <p className="mt-4 rounded-md border border-dashed border-border p-3 text-xs text-muted-foreground">
-          🔒 Les photos d'expertise sont réservées aux acheteurs et administrateurs.
+          🔒 Les photos d'expertise sont réservées à l'administrateur, au vendeur et à l'expert assigné.
         </p>
       )}
     </section>

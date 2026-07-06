@@ -54,10 +54,9 @@ export interface Car {
   status: CarStatus;
   paymentStatus: PaymentStatus;
   deliveryStatus: DeliveryStatus;
-  prixAttendu: number;              // seller's expected price (server-only, drives gradient)
-  /** Prix plancher fixé par l'admin (information interne). */
-  prixPlancher?: number | null;
-  /** Prix minimum acceptable (information interne). */
+  /** Reference/expected price — drives the price-tier gradient everywhere it's shown. */
+  prixPlancher: number;
+  /** Prix de départ pour la mise en enchère (information interne, admin-set). */
   prixMinimum?: number | null;
   /** Sealed-bid only: minimum offer required (strictly greater). Server-validated. */
   minimumAcceptedPrice?: number;

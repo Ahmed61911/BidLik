@@ -112,7 +112,7 @@ function AdminCreateAuctionPage() {
               </div>
               <div className="mt-3 grid grid-cols-2 gap-2 text-xs text-muted-foreground">
                 <span>{c.kilometrage.toLocaleString("fr-MA")} km</span>
-                <span>Prix attendu : {formatMad(c.prixAttendu)}</span>
+                <span>Prix plancher : {formatMad(c.prixPlancher)}</span>
               </div>
               <p className="mt-3 text-[11px] text-muted-foreground">
                 Sélectionnable dans un événement multi-voitures ci-dessus.
@@ -293,9 +293,9 @@ function MultiCarEventDialog({
   async function submit(e: React.FormEvent) {
     e.preventDefault();
     const pickedCars = cars.filter((c) => selected[c.id]?.picked);
-    const missing = pickedCars.find((c) => c.prixMinimum == null || c.prixPlancher == null);
+    const missing = pickedCars.find((c) => c.prixMinimum == null);
     if (missing) {
-      toast.error(`${missing.marque} ${missing.modele} : prix plancher / minimum manquant sur la fiche voiture`);
+      toast.error(`${missing.marque} ${missing.modele} : prix minimum manquant sur la fiche voiture`);
       return;
     }
     const items = pickedCars.map((c) => ({
@@ -446,9 +446,9 @@ function MultiCarEventDialog({
                           <p className="font-mono text-[11px] text-muted-foreground">ID : {c.id}</p>
                           <div className="mt-2 grid grid-cols-2 gap-2 text-xs">
                             <div className="rounded-md border border-border bg-muted/30 px-2 py-1">
-                              <span className="block text-[10px] uppercase text-muted-foreground">Prix attendu (plancher)</span>
+                              <span className="block text-[10px] uppercase text-muted-foreground">Prix plancher</span>
                               <span className="font-semibold tabular-nums text-foreground">
-                                {c.prixPlancher != null ? formatMad(c.prixPlancher) : "—"}
+                                {formatMad(c.prixPlancher)}
                               </span>
                             </div>
                             <div className="rounded-md border border-border bg-muted/30 px-2 py-1">
@@ -458,9 +458,9 @@ function MultiCarEventDialog({
                               </span>
                             </div>
                           </div>
-                          {(c.prixPlancher == null || c.prixMinimum == null) && (
+                          {c.prixMinimum == null && (
                             <p className="mt-1 text-[11px] text-destructive">
-                              ⚠ Renseignez prix plancher et prix minimum dans la fiche voiture avant de créer l'enchère.
+                              ⚠ Renseignez le prix minimum dans la fiche voiture avant de créer l'enchère.
                             </p>
                           )}
                         </div>

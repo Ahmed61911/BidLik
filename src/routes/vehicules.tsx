@@ -167,7 +167,7 @@ function VehiculesPage() {
 function VehiculeCard({ lot }: { lot: Auction }) {
   const c = lot.car;
   const img = c.images?.[0] ? resolveCarImageUrl(c.images[0]) : undefined;
-  const priceClass = (c.prixPlancher ?? c.prixAttendu)
+  const priceClass = c.prixPlancher
     ? priceTierTextClass(listingPriceTier(lot.currentPrice, c))
     : "text-foreground";
   return (

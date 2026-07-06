@@ -75,8 +75,8 @@ function VendeurOverviewPage() {
           <ul className="space-y-2">
             {live.map((c) => {
               const courant = c.prixCourant ?? 0;
-              const pct = Math.min(100, Math.round((courant / c.prixAttendu) * 100));
-              const tier = priceTier(courant, c.prixAttendu);
+              const pct = Math.min(100, Math.round((courant / c.prixPlancher) * 100));
+              const tier = priceTier(courant, c.prixPlancher);
               const textCls = priceTierTextClass(tier);
               const bgCls = priceTierBgClass(tier);
               return (
@@ -87,7 +87,7 @@ function VendeurOverviewPage() {
                         <span className="font-mono text-primary">#{c.id}</span> — {c.marque} {c.modele} ({c.annee})
                       </p>
                       <p className="text-xs text-muted-foreground">
-                        {c.bidCount ?? 0} offres · attendu {formatMad(c.prixAttendu)}
+                        {c.bidCount ?? 0} offres · plancher {formatMad(c.prixPlancher)}
                       </p>
                     </div>
                     <div className="flex items-center gap-3">

@@ -100,7 +100,7 @@ function AcheteurOverview() {
                         )}
                       </p>
                     </div>
-                    <span className={`shrink-0 whitespace-nowrap text-right font-bold ${buyerPriceTierTextClass(buyerPriceTier(e.prixActuel, e.prixAttendu))}`}>{formatMad(e.prixActuel)}</span>
+                    <span className={`shrink-0 whitespace-nowrap text-right font-bold ${buyerPriceTierTextClass(buyerPriceTier(e.prixActuel, e.prixPlancher))}`}>{formatMad(e.prixActuel)}</span>
                   </li>
                 ))}
             </ul>

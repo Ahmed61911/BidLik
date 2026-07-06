@@ -51,8 +51,7 @@ type CarRow = {
   status: Car["status"];
   payment_status: Car["paymentStatus"];
   delivery_status: Car["deliveryStatus"];
-  prix_attendu: number;
-  prix_plancher: number | null;
+  prix_plancher: number;
   prix_minimum: number | null;
   minimum_accepted_price: number | null;
   images: string[] | null;
@@ -85,8 +84,7 @@ function mapCar(row: CarRow): Car {
     status: row.status,
     paymentStatus: row.payment_status,
     deliveryStatus: row.delivery_status,
-    prixAttendu: row.prix_attendu,
-    prixPlancher: row.prix_plancher ?? null,
+    prixPlancher: row.prix_plancher,
     prixMinimum: row.prix_minimum ?? null,
     minimumAcceptedPrice: row.minimum_accepted_price ?? undefined,
     images: Array.isArray(row.images) ? (row.images as string[]) : [],
@@ -117,8 +115,7 @@ function carPatchToRow(p: Partial<Car>): Record<string, unknown> {
   if (p.puissanceFiscale !== undefined) out.puissance_fiscale = p.puissanceFiscale;
   if (p.carteGriseBarree !== undefined) out.carte_grise_barree = p.carteGriseBarree;
   if (p.procuration !== undefined) out.procuration = p.procuration;
-  if (p.prixAttendu !== undefined) out.prix_attendu = p.prixAttendu;
-  if (p.prixPlancher !== undefined) out.prix_plancher = p.prixPlancher ?? null;
+  if (p.prixPlancher !== undefined) out.prix_plancher = p.prixPlancher;
   if (p.prixMinimum !== undefined) out.prix_minimum = p.prixMinimum ?? null;
   if (p.minimumAcceptedPrice !== undefined) out.minimum_accepted_price = p.minimumAcceptedPrice;
   if (p.status !== undefined) out.status = p.status;
@@ -289,7 +286,7 @@ async function listCars(): Promise<(Car & { proprietaireId: string })[]> {
 }
 
 async function createCar(
-  input: Partial<Car> & Pick<Car, "marque" | "modele" | "annee" | "prixAttendu">,
+  input: Partial<Car> & Pick<Car, "marque" | "modele" | "annee" | "prixPlancher">,
 ): Promise<Car> {
   const { data: existing, error: listErr } = await supabase.rpc("admin_list_cars");
   if (listErr) throw new Error(listErr.message);
@@ -300,7 +297,6 @@ async function createCar(
     marque: input.marque,
     modele: input.modele,
     annee: input.annee,
-    prix_attendu: input.prixAttendu,
   };
   const { error } = await supabase
     .from("cars")
@@ -503,7 +499,8 @@ async function createAuctionFromCar(carId: string, opts: CreateAuctionOpts): Pro
   const { data: car, error } = await supabase.rpc("get_car_full", { p_car_id: carId });
   if (error) throw new Error(error.message);
   if (!car) throw new Error("Voiture introuvable");
-  if ((car as CarRow).status !== "open") throw new Error("Cette voiture est déjà en enchère");
+  const carStatus = (car as CarRow).status;
+  if (carStatus !== "open" && carStatus !== "expertise") throw new Error("Cette voiture est déjà en enchère");
   const inserted = await insertAuctionRow(car as CarRow, opts);
   // Re-fetch full auction row via admin RPC
   const { data: fullAuction, error: aErr } = await supabase.rpc("admin_get_auction", { p_id: inserted.id });
@@ -566,7 +563,7 @@ async function createMultiCarEvent(input: {
   for (const it of input.items) {
     const car = carById.get(it.carId);
     if (!car) throw new Error(`Voiture ${it.carId} introuvable`);
-    if (car.status !== "open") throw new Error(`Voiture ${it.carId} déjà en enchère`);
+    if (car.status !== "open" && car.status !== "expertise") throw new Error(`Voiture ${it.carId} déjà en enchère`);
     const r = await insertAuctionRow(car, {
       startingPrice: it.startingPrice,
       durationHours: input.durationHours,
@@ -600,7 +597,7 @@ async function listPendingValidations(): Promise<PendingValidation[]> {
     id: string; car_id: string; current_price: number; ends_at: string;
     top_bidder_id: string | null; updated_at: string; closed_at: string | null;
     admin_validation_deadline: string | null;
-    marque: string; modele: string; annee: number; vendeur_nom: string; prix_attendu: number;
+    marque: string; modele: string; annee: number; vendeur_nom: string; prix_plancher: number;
   }>;
   const bidderIds = Array.from(new Set(rows.map((r) => r.top_bidder_id).filter(Boolean) as string[]));
   const { data: profs } = bidderIds.length
@@ -609,7 +606,7 @@ async function listPendingValidations(): Promise<PendingValidation[]> {
   const nameById = new Map((profs ?? []).map((p) => [p.user_id as string, p.nom as string]));
 
   return rows.map((r) => {
-    const ecart = r.current_price - (r.prix_attendu ?? 0);
+    const ecart = r.current_price - (r.prix_plancher ?? 0);
     const raison: PendingValidation["raison"] = Math.abs(ecart) > 5000 ? "ecart_prix" : "verification_paiement";
     return {
       auctionId: r.id,
@@ -618,7 +615,7 @@ async function listPendingValidations(): Promise<PendingValidation[]> {
       vendeurNom: r.vendeur_nom ?? "—",
       acheteurNom: r.top_bidder_id ? nameById.get(r.top_bidder_id) ?? "Acheteur" : "—",
       prixFinal: r.current_price,
-      prixAttendu: r.prix_attendu ?? 0,
+      prixPlancher: r.prix_plancher ?? 0,
       termineLe: new Date(r.ends_at).toLocaleString("fr-MA", { dateStyle: "short", timeStyle: "short" }),
       raison,
       adminValidationDeadline: r.admin_validation_deadline,

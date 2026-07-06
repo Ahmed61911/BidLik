@@ -93,17 +93,13 @@ export function priceTierGradientClass(tier: PriceTier): string {
 /**
  * Listing price tier — unified color for the current price displayed on
  * every listing, for every user role.
- *  - Reference: prixPlancher (fallback prixAttendu).
+ *  - Reference: prixPlancher.
  *  - < 90%  → rouge (below)
  *  - 90-99% → orange (near)
  *  - ≥ 100% → vert (above)
  */
-export function listingPriceTier(
-  current: number,
-  car: { prixPlancher?: number | null; prixAttendu?: number | null },
-): PriceTier {
-  const reference = car.prixPlancher ?? car.prixAttendu ?? 0;
-  return priceTier(current, reference);
+export function listingPriceTier(current: number, car: { prixPlancher: number }): PriceTier {
+  return priceTier(current, car.prixPlancher);
 }
 
 /**

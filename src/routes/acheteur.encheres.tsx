@@ -73,7 +73,7 @@ function MesEncheresPage() {
                     {" · "}
                     Prix actuel :{" "}
                     <span
-                      className={`font-semibold ${buyerPriceTierTextClass(buyerPriceTier(e.prixActuel, e.prixAttendu))}`}
+                      className={`font-semibold ${buyerPriceTierTextClass(buyerPriceTier(e.prixActuel, e.prixPlancher))}`}
                     >
                       {formatMad(e.prixActuel)}
                     </span>

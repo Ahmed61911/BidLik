@@ -42,7 +42,7 @@ const SELLER_STEPS = [
   {
     n: "01",
     title: "Soumettez votre voiture",
-    text: "Depuis votre espace vendeur, renseignez les informations de votre véhicule (marque, modèle, kilométrage, prix attendu) et envoyez votre demande à l'administrateur.",
+    text: "Depuis votre espace vendeur, renseignez les informations de votre véhicule (marque, modèle, kilométrage, prix plancher) et envoyez votre demande à l'administrateur.",
   },
   {
     n: "02",

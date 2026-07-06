@@ -29,7 +29,6 @@ import { Route as EventsIndexRouteImport } from './routes/events.index'
 import { Route as AuctionsIndexRouteImport } from './routes/auctions.index'
 import { Route as AdminIndexRouteImport } from './routes/admin.index'
 import { Route as AcheteurIndexRouteImport } from './routes/acheteur.index'
-import { Route as VendeurVoituresRouteImport } from './routes/vendeur.voitures'
 import { Route as VendeurPaiementsRouteImport } from './routes/vendeur.paiements'
 import { Route as VendeurHistoriqueRouteImport } from './routes/vendeur.historique'
 import { Route as VendeurEncheresRouteImport } from './routes/vendeur.encheres'
@@ -51,7 +50,9 @@ import { Route as AcheteurNotificationsRouteImport } from './routes/acheteur.not
 import { Route as AcheteurEncheresRouteImport } from './routes/acheteur.encheres'
 import { Route as AcheteurCautionPaiementRouteImport } from './routes/acheteur.caution-paiement'
 import { Route as AcheteurCautionRouteImport } from './routes/acheteur.caution'
+import { Route as VendeurVoituresIndexRouteImport } from './routes/vendeur.voitures.index'
 import { Route as AcheteurGagneesIndexRouteImport } from './routes/acheteur.gagnees.index'
+import { Route as VendeurVoituresCarIdRouteImport } from './routes/vendeur.voitures.$carId'
 import { Route as ExpertInspectionsInspectionIdRouteImport } from './routes/expert.inspections.$inspectionId'
 import { Route as ApiStorageUploadRouteImport } from './routes/api/storage/upload'
 import { Route as ApiStorageSignedUrlRouteImport } from './routes/api/storage/signed-url'
@@ -166,11 +167,6 @@ const AcheteurIndexRoute = AcheteurIndexRouteImport.update({
   path: '/',
   getParentRoute: () => AcheteurRoute,
 } as any)
-const VendeurVoituresRoute = VendeurVoituresRouteImport.update({
-  id: '/voitures',
-  path: '/voitures',
-  getParentRoute: () => VendeurRoute,
-} as any)
 const VendeurPaiementsRoute = VendeurPaiementsRouteImport.update({
   id: '/paiements',
   path: '/paiements',
@@ -276,10 +272,20 @@ const AcheteurCautionRoute = AcheteurCautionRouteImport.update({
   path: '/caution',
   getParentRoute: () => AcheteurRoute,
 } as any)
+const VendeurVoituresIndexRoute = VendeurVoituresIndexRouteImport.update({
+  id: '/voitures/',
+  path: '/voitures/',
+  getParentRoute: () => VendeurRoute,
+} as any)
 const AcheteurGagneesIndexRoute = AcheteurGagneesIndexRouteImport.update({
   id: '/gagnees/',
   path: '/gagnees/',
   getParentRoute: () => AcheteurRoute,
+} as any)
+const VendeurVoituresCarIdRoute = VendeurVoituresCarIdRouteImport.update({
+  id: '/voitures/$carId',
+  path: '/voitures/$carId',
+  getParentRoute: () => VendeurRoute,
 } as any)
 const ExpertInspectionsInspectionIdRoute =
   ExpertInspectionsInspectionIdRouteImport.update({
@@ -388,7 +394,6 @@ export interface FileRoutesByFullPath {
   '/vendeur/encheres': typeof VendeurEncheresRoute
   '/vendeur/historique': typeof VendeurHistoriqueRoute
   '/vendeur/paiements': typeof VendeurPaiementsRoute
-  '/vendeur/voitures': typeof VendeurVoituresRoute
   '/acheteur/': typeof AcheteurIndexRoute
   '/admin/': typeof AdminIndexRoute
   '/auctions/': typeof AuctionsIndexRoute
@@ -408,7 +413,9 @@ export interface FileRoutesByFullPath {
   '/api/storage/signed-url': typeof ApiStorageSignedUrlRoute
   '/api/storage/upload': typeof ApiStorageUploadRoute
   '/expert/inspections/$inspectionId': typeof ExpertInspectionsInspectionIdRoute
+  '/vendeur/voitures/$carId': typeof VendeurVoituresCarIdRoute
   '/acheteur/gagnees/': typeof AcheteurGagneesIndexRoute
+  '/vendeur/voitures/': typeof VendeurVoituresIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -442,7 +449,6 @@ export interface FileRoutesByTo {
   '/vendeur/encheres': typeof VendeurEncheresRoute
   '/vendeur/historique': typeof VendeurHistoriqueRoute
   '/vendeur/paiements': typeof VendeurPaiementsRoute
-  '/vendeur/voitures': typeof VendeurVoituresRoute
   '/acheteur': typeof AcheteurIndexRoute
   '/admin': typeof AdminIndexRoute
   '/auctions': typeof AuctionsIndexRoute
@@ -462,7 +468,9 @@ export interface FileRoutesByTo {
   '/api/storage/signed-url': typeof ApiStorageSignedUrlRoute
   '/api/storage/upload': typeof ApiStorageUploadRoute
   '/expert/inspections/$inspectionId': typeof ExpertInspectionsInspectionIdRoute
+  '/vendeur/voitures/$carId': typeof VendeurVoituresCarIdRoute
   '/acheteur/gagnees': typeof AcheteurGagneesIndexRoute
+  '/vendeur/voitures': typeof VendeurVoituresIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -501,7 +509,6 @@ export interface FileRoutesById {
   '/vendeur/encheres': typeof VendeurEncheresRoute
   '/vendeur/historique': typeof VendeurHistoriqueRoute
   '/vendeur/paiements': typeof VendeurPaiementsRoute
-  '/vendeur/voitures': typeof VendeurVoituresRoute
   '/acheteur/': typeof AcheteurIndexRoute
   '/admin/': typeof AdminIndexRoute
   '/auctions/': typeof AuctionsIndexRoute
@@ -521,7 +528,9 @@ export interface FileRoutesById {
   '/api/storage/signed-url': typeof ApiStorageSignedUrlRoute
   '/api/storage/upload': typeof ApiStorageUploadRoute
   '/expert/inspections/$inspectionId': typeof ExpertInspectionsInspectionIdRoute
+  '/vendeur/voitures/$carId': typeof VendeurVoituresCarIdRoute
   '/acheteur/gagnees/': typeof AcheteurGagneesIndexRoute
+  '/vendeur/voitures/': typeof VendeurVoituresIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -561,7 +570,6 @@ export interface FileRouteTypes {
     | '/vendeur/encheres'
     | '/vendeur/historique'
     | '/vendeur/paiements'
-    | '/vendeur/voitures'
     | '/acheteur/'
     | '/admin/'
     | '/auctions/'
@@ -581,7 +589,9 @@ export interface FileRouteTypes {
     | '/api/storage/signed-url'
     | '/api/storage/upload'
     | '/expert/inspections/$inspectionId'
+    | '/vendeur/voitures/$carId'
     | '/acheteur/gagnees/'
+    | '/vendeur/voitures/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -615,7 +625,6 @@ export interface FileRouteTypes {
     | '/vendeur/encheres'
     | '/vendeur/historique'
     | '/vendeur/paiements'
-    | '/vendeur/voitures'
     | '/acheteur'
     | '/admin'
     | '/auctions'
@@ -635,7 +644,9 @@ export interface FileRouteTypes {
     | '/api/storage/signed-url'
     | '/api/storage/upload'
     | '/expert/inspections/$inspectionId'
+    | '/vendeur/voitures/$carId'
     | '/acheteur/gagnees'
+    | '/vendeur/voitures'
   id:
     | '__root__'
     | '/'
@@ -673,7 +684,6 @@ export interface FileRouteTypes {
     | '/vendeur/encheres'
     | '/vendeur/historique'
     | '/vendeur/paiements'
-    | '/vendeur/voitures'
     | '/acheteur/'
     | '/admin/'
     | '/auctions/'
@@ -693,7 +703,9 @@ export interface FileRouteTypes {
     | '/api/storage/signed-url'
     | '/api/storage/upload'
     | '/expert/inspections/$inspectionId'
+    | '/vendeur/voitures/$carId'
     | '/acheteur/gagnees/'
+    | '/vendeur/voitures/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -869,13 +881,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AcheteurIndexRouteImport
       parentRoute: typeof AcheteurRoute
     }
-    '/vendeur/voitures': {
-      id: '/vendeur/voitures'
-      path: '/voitures'
-      fullPath: '/vendeur/voitures'
-      preLoaderRoute: typeof VendeurVoituresRouteImport
-      parentRoute: typeof VendeurRoute
-    }
     '/vendeur/paiements': {
       id: '/vendeur/paiements'
       path: '/paiements'
@@ -1023,12 +1028,26 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AcheteurCautionRouteImport
       parentRoute: typeof AcheteurRoute
     }
+    '/vendeur/voitures/': {
+      id: '/vendeur/voitures/'
+      path: '/voitures'
+      fullPath: '/vendeur/voitures/'
+      preLoaderRoute: typeof VendeurVoituresIndexRouteImport
+      parentRoute: typeof VendeurRoute
+    }
     '/acheteur/gagnees/': {
       id: '/acheteur/gagnees/'
       path: '/gagnees'
       fullPath: '/acheteur/gagnees/'
       preLoaderRoute: typeof AcheteurGagneesIndexRouteImport
       parentRoute: typeof AcheteurRoute
+    }
+    '/vendeur/voitures/$carId': {
+      id: '/vendeur/voitures/$carId'
+      path: '/voitures/$carId'
+      fullPath: '/vendeur/voitures/$carId'
+      preLoaderRoute: typeof VendeurVoituresCarIdRouteImport
+      parentRoute: typeof VendeurRoute
     }
     '/expert/inspections/$inspectionId': {
       id: '/expert/inspections/$inspectionId'
@@ -1210,16 +1229,18 @@ interface VendeurRouteChildren {
   VendeurEncheresRoute: typeof VendeurEncheresRoute
   VendeurHistoriqueRoute: typeof VendeurHistoriqueRoute
   VendeurPaiementsRoute: typeof VendeurPaiementsRoute
-  VendeurVoituresRoute: typeof VendeurVoituresRoute
   VendeurIndexRoute: typeof VendeurIndexRoute
+  VendeurVoituresCarIdRoute: typeof VendeurVoituresCarIdRoute
+  VendeurVoituresIndexRoute: typeof VendeurVoituresIndexRoute
 }
 
 const VendeurRouteChildren: VendeurRouteChildren = {
   VendeurEncheresRoute: VendeurEncheresRoute,
   VendeurHistoriqueRoute: VendeurHistoriqueRoute,
   VendeurPaiementsRoute: VendeurPaiementsRoute,
-  VendeurVoituresRoute: VendeurVoituresRoute,
   VendeurIndexRoute: VendeurIndexRoute,
+  VendeurVoituresCarIdRoute: VendeurVoituresCarIdRoute,
+  VendeurVoituresIndexRoute: VendeurVoituresIndexRoute,
 }
 
 const VendeurRouteWithChildren =

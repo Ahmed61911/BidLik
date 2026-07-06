@@ -41,7 +41,7 @@ type CarRow = {
   status: Car["status"];
   payment_status: Car["paymentStatus"];
   delivery_status: Car["deliveryStatus"];
-  prix_attendu: number;
+  prix_plancher: number;
   minimum_accepted_price: number | null;
   images: string[] | null;
 };
@@ -100,7 +100,7 @@ type EventRow = {
 const PUBLIC_CAR_COLUMNS =
   "id, type, marque, modele, finition, transmission, carburant, " +
   "annee, kilometrage, couleur_exterieur, couleur_interieur, note_expert, " +
-  "nombre_cles, puissance_fiscale, images, status, created_at, updated_at";
+  "nombre_cles, puissance_fiscale, images, status, prix_plancher, created_at, updated_at";
 
 
 // Auction columns safe for anon — excludes top_bidder_id (user identity).
@@ -134,7 +134,7 @@ function mapCar(row: Partial<CarRow> & { id: string; marque: string; modele: str
     status: (row.status ?? "open") as Car["status"],
     paymentStatus: (row.payment_status ?? "non_paye") as Car["paymentStatus"],
     deliveryStatus: (row.delivery_status ?? "non_livre") as Car["deliveryStatus"],
-    prixAttendu: row.prix_attendu ?? 0,
+    prixPlancher: row.prix_plancher ?? 0,
     minimumAcceptedPrice: row.minimum_accepted_price ?? undefined,
     // Only ever the expert's real uploaded commercial photos — never a
     // random stock substitute for a different car of the same brand.

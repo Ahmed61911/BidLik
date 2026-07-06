@@ -50,7 +50,7 @@ export interface PendingSubmission {
   modele: string;
   annee: number;
   kilometrage: number;
-  prixAttendu: number;
+  prixPlancher: number;
   soumisLe: string;
 }
 
@@ -61,7 +61,7 @@ export interface PendingValidation {
   vendeurNom: string;
   acheteurNom: string;
   prixFinal: number;
-  prixAttendu: number;
+  prixPlancher: number;
   termineLe: string;
   raison: "ecart_prix" | "verification_paiement" | "litige" | "controle_qualite";
   /** ISO timestamp — 24h after closure, admin must validate/reject before this. */

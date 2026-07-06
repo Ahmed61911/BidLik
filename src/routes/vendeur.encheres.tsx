@@ -29,7 +29,7 @@ function VendeurEncheresPage() {
   );
 
   const totalCourant = auctions.reduce((s, c) => s + (c.prixCourant ?? 0), 0);
-  const totalAttendu = auctions.reduce((s, c) => s + c.prixAttendu, 0);
+  const totalPlancher = auctions.reduce((s, c) => s + c.prixPlancher, 0);
 
   return (
     <div className="space-y-5">
@@ -37,7 +37,7 @@ function VendeurEncheresPage() {
       <div className="grid gap-3 sm:grid-cols-3">
         <Kpi label="Enchères actives" value={auctions.length} icon={Gavel} tone="accent" />
         <Kpi label="Cumul prix courant" value={formatMad(totalCourant)} icon={TrendingUp} tone="success" />
-        <Kpi label="Cumul prix attendu" value={formatMad(totalAttendu)} icon={Clock} />
+        <Kpi label="Cumul prix plancher" value={formatMad(totalPlancher)} icon={Clock} />
       </div>
 
       {loading ? (
@@ -53,9 +53,9 @@ function VendeurEncheresPage() {
         <ul className="space-y-3">
           {auctions.map((c) => {
             const courant = c.prixCourant ?? 0;
-            const tier = priceTier(courant, c.prixAttendu);
+            const tier = priceTier(courant, c.prixPlancher);
             const sousAttente = tier !== "above";
-            const pct = Math.min(100, Math.round((courant / c.prixAttendu) * 100));
+            const pct = Math.min(100, Math.round((courant / c.prixPlancher) * 100));
             const Icon = sousAttente ? TrendingDown : TrendingUp;
             const bgCls = priceTierBgClass(tier);
             return (
@@ -74,7 +74,7 @@ function VendeurEncheresPage() {
                       </span>
                     </div>
                     <div className="mt-3 grid gap-3 text-sm sm:grid-cols-3">
-                      <Info label="Prix attendu" value={formatMad(c.prixAttendu)} />
+                      <Info label="Prix plancher" value={formatMad(c.prixPlancher)} />
                       <Info
                         label="Prix courant"
                         value={formatMad(courant)}
@@ -91,7 +91,7 @@ function VendeurEncheresPage() {
                       </div>
                       <p className="mt-1 flex items-center gap-1 text-[11px] text-muted-foreground">
                         <Icon className="h-3 w-3" />
-                        {pct}% du prix attendu
+                        {pct}% du prix plancher
                       </p>
                     </div>
                   </div>

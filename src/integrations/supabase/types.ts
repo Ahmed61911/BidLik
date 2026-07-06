@@ -263,9 +263,8 @@ export type Database = {
           note_expert: number | null
           opposition: boolean
           payment_status: Database["public"]["Enums"]["payment_status_t"]
-          prix_attendu: number
           prix_minimum: number | null
-          prix_plancher: number | null
+          prix_plancher: number
           procuration: Database["public"]["Enums"]["procuration_t"]
           puissance_fiscale: number
           status: Database["public"]["Enums"]["car_status"]
@@ -298,9 +297,8 @@ export type Database = {
           note_expert?: number | null
           opposition?: boolean
           payment_status?: Database["public"]["Enums"]["payment_status_t"]
-          prix_attendu?: number
           prix_minimum?: number | null
-          prix_plancher?: number | null
+          prix_plancher?: number
           procuration?: Database["public"]["Enums"]["procuration_t"]
           puissance_fiscale?: number
           status?: Database["public"]["Enums"]["car_status"]
@@ -333,9 +331,8 @@ export type Database = {
           note_expert?: number | null
           opposition?: boolean
           payment_status?: Database["public"]["Enums"]["payment_status_t"]
-          prix_attendu?: number
           prix_minimum?: number | null
-          prix_plancher?: number | null
+          prix_plancher?: number
           procuration?: Database["public"]["Enums"]["procuration_t"]
           puissance_fiscale?: number
           status?: Database["public"]["Enums"]["car_status"]
@@ -767,9 +764,8 @@ export type Database = {
           note_expert: number | null
           opposition: boolean
           payment_status: Database["public"]["Enums"]["payment_status_t"]
-          prix_attendu: number
           prix_minimum: number | null
-          prix_plancher: number | null
+          prix_plancher: number
           procuration: Database["public"]["Enums"]["procuration_t"]
           puissance_fiscale: number
           status: Database["public"]["Enums"]["car_status"]
@@ -811,9 +807,8 @@ export type Database = {
           note_expert: number | null
           opposition: boolean
           payment_status: Database["public"]["Enums"]["payment_status_t"]
-          prix_attendu: number
           prix_minimum: number | null
-          prix_plancher: number | null
+          prix_plancher: number
           procuration: Database["public"]["Enums"]["procuration_t"]
           puissance_fiscale: number
           status: Database["public"]["Enums"]["car_status"]
@@ -885,7 +880,7 @@ export type Database = {
           id: string
           marque: string
           modele: string
-          prix_attendu: number
+          prix_plancher: number
           top_bidder_id: string
           updated_at: string
           vendeur_nom: string
@@ -1266,9 +1261,8 @@ export type Database = {
           note_expert: number | null
           opposition: boolean
           payment_status: Database["public"]["Enums"]["payment_status_t"]
-          prix_attendu: number
           prix_minimum: number | null
-          prix_plancher: number | null
+          prix_plancher: number
           procuration: Database["public"]["Enums"]["procuration_t"]
           puissance_fiscale: number
           status: Database["public"]["Enums"]["car_status"]
@@ -1315,6 +1309,10 @@ export type Database = {
         Returns: boolean
       }
       is_my_account_active: { Args: never; Returns: boolean }
+      is_related_to_my_car: {
+        Args: { p_caller: string; p_profile_user_id: string }
+        Returns: boolean
+      }
       list_auction_bids: {
         Args: { p_auction_id: string }
         Returns: {
@@ -1382,9 +1380,8 @@ export type Database = {
           note_expert: number | null
           opposition: boolean
           payment_status: Database["public"]["Enums"]["payment_status_t"]
-          prix_attendu: number
           prix_minimum: number | null
-          prix_plancher: number | null
+          prix_plancher: number
           procuration: Database["public"]["Enums"]["procuration_t"]
           puissance_fiscale: number
           status: Database["public"]["Enums"]["car_status"]

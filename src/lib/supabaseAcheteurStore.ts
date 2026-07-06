@@ -55,7 +55,7 @@ type CarRow = {
   marque: string;
   modele: string;
   annee: number;
-  prix_attendu: number;
+  prix_plancher: number;
 };
 
 function deriveEnchereStatus(auctionStatus: string, isLeader: boolean): EnchereStatus {
@@ -96,7 +96,7 @@ async function refreshEncheres(uid: string) {
   const carIds = Array.from(new Set(aRows.map((a) => a.car_id)));
   const { data: cars } = await supabase
     .from("cars")
-    .select("id, marque, modele, annee, prix_attendu")
+    .select("id, marque, modele, annee, prix_plancher")
     .in("id", carIds);
   const carMap = new Map<string, CarRow>();
   ((cars ?? []) as CarRow[]).forEach((c) => carMap.set(c.id, c));
@@ -112,7 +112,7 @@ async function refreshEncheres(uid: string) {
       annee: car?.annee ?? 0,
       monMontant: myMax.get(a.id) ?? 0,
       prixActuel: a.current_price,
-      prixAttendu: car?.prix_attendu ?? 0,
+      prixPlancher: car?.prix_plancher ?? 0,
       jeSuisLeader: isLeader,
       endsAt: a.ends_at,
       status: deriveEnchereStatus(a.status, isLeader),

@@ -6,7 +6,7 @@ import { formatMad, priceTier, priceTierTextClass, type PriceTier } from "@/lib/
 import { STAGE_LABEL, STAGE_TONE } from "./vendeur.index";
 import { Dropdown } from "@/components/ui/dropdown";
 
-export const Route = createFileRoute("/vendeur/voitures")({
+export const Route = createFileRoute("/vendeur/voitures/")({
   component: VendeurCarsPage,
 });
 
@@ -57,7 +57,7 @@ function VendeurCarsPage() {
         <ul className="space-y-3">
           {filtered.map((c) => {
             const courant = c.prixCourant ?? c.prixFinal ?? 0;
-            const tier = courant > 0 ? priceTier(courant, c.prixAttendu) : undefined;
+            const tier = courant > 0 ? priceTier(courant, c.prixPlancher) : undefined;
             return (
               <li key={c.id} className="rounded-xl border border-border bg-card p-4 shadow-sm">
                 <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
@@ -77,7 +77,7 @@ function VendeurCarsPage() {
                     </div>
                     <div className="mt-3 grid gap-3 text-sm sm:grid-cols-2 lg:grid-cols-4">
                       <Info label="Kilométrage" value={`${c.kilometrage.toLocaleString("fr-MA")} km`} />
-                      <Info label="Prix attendu" value={formatMad(c.prixAttendu)} />
+                      <Info label="Prix plancher" value={formatMad(c.prixPlancher)} />
                       <Info
                         label="Prix actuel"
                         value={courant > 0 ? formatMad(courant) : "—"}
@@ -91,6 +91,13 @@ function VendeurCarsPage() {
                     </p>
                   </div>
                   <div className="flex shrink-0 flex-wrap items-center gap-2">
+                    <Link
+                      to="/vendeur/voitures/$carId"
+                      params={{ carId: c.id }}
+                      className="inline-flex h-9 items-center gap-1 rounded-md border border-border bg-background px-3 text-sm font-semibold text-foreground transition-colors hover:bg-secondary"
+                    >
+                      Voir les détails
+                    </Link>
                     {c.auctionId && (
                       <Link
                         to="/auctions/$auctionId"

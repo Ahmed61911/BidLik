@@ -10,7 +10,7 @@ import type {
   SellerStats,
   SellerSubmitCarInput,
 } from "@/types/vendeur";
-import type { CarStatus, PaymentStatus, DeliveryStatus } from "@/types/auction";
+import type { Car, CarStatus, PaymentStatus, DeliveryStatus } from "@/types/auction";
 
 const COMMISSION_RATE = 0.05;
 
@@ -41,7 +41,7 @@ type CarRow = {
   modele: string;
   annee: number;
   kilometrage: number;
-  prix_attendu: number;
+  prix_plancher: number;
   note_expert: number | null;
   status: CarStatus;
   payment_status: PaymentStatus;
@@ -95,7 +95,7 @@ async function fetchMyCars(uid: string): Promise<SellerCar[]> {
     modele: r.modele as string,
     annee: r.annee as number,
     kilometrage: r.kilometrage as number,
-    prix_attendu: r.prix_attendu as number,
+    prix_plancher: r.prix_plancher as number,
     note_expert: (r.note_expert as number | null) ?? null,
     status: r.status as CarStatus,
     payment_status: r.payment_status as PaymentStatus,
@@ -154,7 +154,7 @@ async function fetchMyCars(uid: string): Promise<SellerCar[]> {
       modele: c.modele,
       annee: c.annee,
       kilometrage: c.kilometrage,
-      prixAttendu: c.prix_attendu,
+      prixPlancher: c.prix_plancher,
       noteExpert: c.note_expert,
       stage,
       soumisLe: fmtDate(c.created_at),
@@ -173,6 +173,72 @@ async function fetchMyCars(uid: string): Promise<SellerCar[]> {
   });
 }
 
+type CarFullRow = {
+  id: string;
+  vendeur_id: string | null;
+  vendeur_nom: string;
+  type: Car["type"];
+  body_type: string | null;
+  marque: string;
+  modele: string;
+  finition: string;
+  transmission: Car["transmission"];
+  carburant: Car["carburant"];
+  annee: number;
+  kilometrage: number;
+  couleur_exterieur: string;
+  couleur_interieur: string;
+  note_expert: number | null;
+  nombre_cles: number;
+  opposition: boolean;
+  main_levee: boolean;
+  puissance_fiscale: number;
+  carte_grise_barree: boolean;
+  procuration: Car["procuration"];
+  date_vente: string | null;
+  status: Car["status"];
+  payment_status: Car["paymentStatus"];
+  delivery_status: Car["deliveryStatus"];
+  prix_plancher: number;
+  prix_minimum: number | null;
+  minimum_accepted_price: number | null;
+  images: string[] | null;
+};
+
+function mapCarFull(row: CarFullRow): Car {
+  return {
+    id: row.id,
+    vendeurId: row.vendeur_id ?? "",
+    vendeurNom: row.vendeur_nom || "Vendeur",
+    type: row.type,
+    bodyType: row.body_type ?? null,
+    marque: row.marque,
+    modele: row.modele,
+    finition: row.finition,
+    transmission: row.transmission,
+    carburant: row.carburant,
+    annee: row.annee,
+    kilometrage: row.kilometrage,
+    couleurExterieur: row.couleur_exterieur,
+    couleurInterieur: row.couleur_interieur,
+    noteExpert: row.note_expert,
+    nombreCles: row.nombre_cles,
+    opposition: row.opposition,
+    mainLevee: row.main_levee,
+    puissanceFiscale: row.puissance_fiscale,
+    carteGriseBarree: row.carte_grise_barree,
+    procuration: row.procuration,
+    dateVente: row.date_vente,
+    status: row.status,
+    paymentStatus: row.payment_status,
+    deliveryStatus: row.delivery_status,
+    prixPlancher: row.prix_plancher,
+    prixMinimum: row.prix_minimum ?? null,
+    minimumAcceptedPrice: row.minimum_accepted_price ?? undefined,
+    images: Array.isArray(row.images) ? row.images : [],
+  };
+}
+
 function newCarId(): string {
   const ts = Date.now().toString(36);
   const rand = Math.random().toString(36).slice(2, 6);
@@ -183,6 +249,14 @@ export const supabaseVendeurApi = {
   async listCars(): Promise<SellerCar[]> {
     const uid = await currentUserId();
     return fetchMyCars(uid);
+  },
+
+  /** Full detail for one of the caller's own cars — get_car_full() enforces ownership. */
+  async getCar(carId: string): Promise<Car> {
+    const { data, error } = await supabase.rpc("get_car_full", { p_car_id: carId });
+    if (error) throw new Error(error.message);
+    if (!data) throw new Error("Voiture introuvable");
+    return mapCarFull(data as CarFullRow);
   },
 
   async getStats(): Promise<SellerStats> {
@@ -239,7 +313,7 @@ export const supabaseVendeurApi = {
       couleur_interieur: input.couleurInterieur || "",
       puissance_fiscale: input.puissanceFiscale || 8,
       nombre_cles: input.nombreCles || 2,
-      prix_attendu: input.prixAttendu,
+      prix_plancher: input.prixPlancher,
       status: "open",
       images: [],
     });

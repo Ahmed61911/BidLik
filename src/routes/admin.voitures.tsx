@@ -98,7 +98,7 @@ function AdminCarsPage() {
             <div className="mt-2 grid grid-cols-3 gap-2 text-xs">
               <div><p className="text-[10px] uppercase text-muted-foreground">MEC (Mise En Circulation)</p><p className="font-medium">{c.annee}</p></div>
               <div><p className="text-[10px] uppercase text-muted-foreground">KM</p><p className="font-medium">{c.kilometrage.toLocaleString("fr-MA")}</p></div>
-              <div><p className="text-[10px] uppercase text-muted-foreground">Prix plancher</p><p className="font-medium">{c.prixPlancher != null ? formatMad(c.prixPlancher) : "—"}</p></div>
+              <div><p className="text-[10px] uppercase text-muted-foreground">Prix plancher</p><p className="font-medium">{formatMad(c.prixPlancher)}</p></div>
               <div><p className="text-[10px] uppercase text-muted-foreground">Prix minimum</p><p className="font-medium">{c.prixMinimum != null ? formatMad(c.prixMinimum) : "—"}</p></div>
             </div>
             <p className="mt-2 text-xs text-muted-foreground">Vendeur : {c.vendeurNom}</p>
@@ -163,7 +163,7 @@ function AdminCarsPage() {
                 <td className="px-4 py-3 text-muted-foreground">{c.vendeurNom}</td>
                 <td className="px-4 py-3">{c.annee}</td>
                 <td className="px-4 py-3">{c.kilometrage.toLocaleString("fr-MA")}</td>
-                <td className="px-4 py-3 font-medium text-foreground">{c.prixPlancher != null ? formatMad(c.prixPlancher) : "—"}</td>
+                <td className="px-4 py-3 font-medium text-foreground">{formatMad(c.prixPlancher)}</td>
                 <td className="px-4 py-3 text-muted-foreground">{c.prixMinimum != null ? formatMad(c.prixMinimum) : "—"}</td>
                 <td className="px-4 py-3">
                   <StatusBadge status={c.status} />
@@ -326,7 +326,6 @@ function CarFormDialog({ existing, onClose, onSaved }: { existing?: CarRow; onCl
         await supabaseAdminApi.createCar({
           ...form,
           vendeurNom: vendeur?.nom ?? "",
-          prixAttendu: 0,
         });
         toast.success("Voiture créée et assignée au vendeur");
       }
@@ -506,8 +505,8 @@ function CarFormDialog({ existing, onClose, onSaved }: { existing?: CarRow; onCl
           <div className="sm:col-span-2 rounded-lg border border-primary/30 bg-primary/5 p-3">
             <p className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-primary">Zone prix (interne)</p>
             <div className="grid gap-3 sm:grid-cols-2">
-              <Field label="Prix plancher (MAD)"><input type="number" min={0} value={form.prixPlancher} onChange={(e) => setForm({ ...form, prixPlancher: +e.target.value })} className="input" /></Field>
-              <Field label="Prix minimum (MAD)"><input type="number" min={0} value={form.prixMinimum} onChange={(e) => setForm({ ...form, prixMinimum: +e.target.value })} className="input" /></Field>
+              <Field label="Prix plancher (MAD)"><input type="number" min={0} step={1000} value={form.prixPlancher} onChange={(e) => setForm({ ...form, prixPlancher: +e.target.value })} className="input" /></Field>
+              <Field label="Prix minimum (MAD)"><input type="number" min={0} step={1000} value={form.prixMinimum} onChange={(e) => setForm({ ...form, prixMinimum: +e.target.value })} className="input" /></Field>
             </div>
           </div>
           <Field label="Couleur extérieure" locked={isLocked("couleurExterieur")}><input value={form.couleurExterieur} onChange={(e) => setForm({ ...form, couleurExterieur: e.target.value })} className="input" /></Field>
@@ -787,9 +786,8 @@ function CarPreviewDialog({
 
             <section>
               <h4 className="mb-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground">Prix (interne)</h4>
-              <InfoRow label="Prix plancher" value={car.prixPlancher != null ? formatMad(car.prixPlancher) : "—"} />
+              <InfoRow label="Prix plancher" value={formatMad(car.prixPlancher)} />
               <InfoRow label="Prix minimum" value={car.prixMinimum != null ? formatMad(car.prixMinimum) : "—"} />
-              <InfoRow label="Prix attendu" value={car.prixAttendu ? formatMad(car.prixAttendu) : "—"} />
             </section>
           </div>
 

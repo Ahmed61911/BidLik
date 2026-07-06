@@ -13,7 +13,7 @@ export interface MonEnchere {
   annee: number;
   monMontant: number;          // last bid I placed
   prixActuel: number;          // current top bid on the auction
-  prixAttendu: number;         // seller's expected price (used for color tier)
+  prixPlancher: number;        // reference price (used for color tier)
   jeSuisLeader: boolean;
   endsAt: string;
   status: EnchereStatus;
