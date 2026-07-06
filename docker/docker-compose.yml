@@ -252,12 +252,18 @@ services:
     depends_on: [kong]
     restart: unless-stopped
     environment:
-      # kong.bidlik.local is a made-up hostname, not "localhost" — see the
-      # note below on why a real hostname is required here.
-      VITE_SUPABASE_URL: http://kong.bidlik.local:${KONG_HTTP_PORT:-8000}
+      # kong.bidlik.local is a made-up hostname that only resolves via the
+      # extra_hosts entry below — it works for THIS container's own SSR
+      # calls, but an end user's browser can never resolve it. That default
+      # is fine for local dev (map it to 127.0.0.1 in your own /etc/hosts),
+      # but a real deployment (e.g. a VPS reachable at a public IP/domain)
+      # MUST override VITE_SUPABASE_URL / SUPABASE_URL / APP_ORIGIN in
+      # docker/.env to that public address, or login and every other API
+      # call will fail client-side with ERR_CONNECTION_REFUSED.
+      VITE_SUPABASE_URL: ${VITE_SUPABASE_URL:-http://kong.bidlik.local:${KONG_HTTP_PORT:-8000}}
       VITE_SUPABASE_PUBLISHABLE_KEY: ${ANON_KEY}
       VITE_SUPABASE_PROJECT_ID: local
-      SUPABASE_URL: http://kong.bidlik.local:${KONG_HTTP_PORT:-8000}
+      SUPABASE_URL: ${SUPABASE_URL:-http://kong.bidlik.local:${KONG_HTTP_PORT:-8000}}
       SUPABASE_PUBLISHABLE_KEY: ${ANON_KEY}
       SUPABASE_SERVICE_ROLE_KEY: ${SERVICE_ROLE_KEY}
       ALLOW_DEMO_SEED: "true"
@@ -267,7 +273,7 @@ services:
       # container recreation/image rebuilds.
       STORAGE_ROOT: /storage
       STORAGE_SIGNING_SECRET: ${STORAGE_SIGNING_SECRET}
-      APP_ORIGIN: http://localhost:${APP_PORT:-8080}
+      APP_ORIGIN: ${APP_ORIGIN:-http://localhost:${APP_PORT:-8080}}
     volumes:
       - storage-files:/storage
     extra_hosts:
