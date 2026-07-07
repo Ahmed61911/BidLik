@@ -417,14 +417,24 @@ export const acheteurStore = {
 
 /* React hooks (stable references via memoized snapshots) */
 
+// getServerSnapshot must return a referentially stable value across calls —
+// a fresh `() => []` literal returns a new array every render, which is
+// exactly what triggers React's "getServerSnapshot should be cached to
+// avoid an infinite loop" warning (confirmed live on /acheteur). One shared
+// empty array works for all three hooks since it's never mutated.
+const EMPTY: never[] = [];
+function getServerSnapshot(): never[] {
+  return EMPTY;
+}
+
 export function useMesEncheres(): MonEnchere[] {
-  return useSyncExternalStore(acheteurStore.subscribe, acheteurStore.getEncheres, () => []);
+  return useSyncExternalStore(acheteurStore.subscribe, acheteurStore.getEncheres, getServerSnapshot);
 }
 export function useMesPaiements(): Paiement[] {
-  return useSyncExternalStore(acheteurStore.subscribe, acheteurStore.getPaiements, () => []);
+  return useSyncExternalStore(acheteurStore.subscribe, acheteurStore.getPaiements, getServerSnapshot);
 }
 export function useMesNotifications(): Notification[] {
-  return useSyncExternalStore(acheteurStore.subscribe, acheteurStore.getNotifications, () => []);
+  return useSyncExternalStore(acheteurStore.subscribe, acheteurStore.getNotifications, getServerSnapshot);
 }
 
 export { api };

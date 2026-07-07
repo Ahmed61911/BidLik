@@ -20,6 +20,13 @@ dist-ssr
 .wrangler/
 .dev.vars
 
+# Test artifacts
+/test-results/
+/playwright-report/
+/blob-report/
+/playwright/.cache/
+coverage/
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

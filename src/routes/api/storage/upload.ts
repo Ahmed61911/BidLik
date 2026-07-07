@@ -19,7 +19,18 @@ const CATEGORIES: readonly FileCategory[] = [
 
 // Path must look like a relative path built by src/lib/storage/paths.ts:
 // segments of [A-Za-z0-9._-]+ only, no leading slash, no "..".
+//
+// The character class alone does NOT reject ".." (dots and dashes are both
+// allowed characters, and a segment can be made of dots only) — isSafePath()
+// below adds the explicit per-segment check the comment always claimed to
+// enforce. resolveStoragePath() in fs.server.ts independently re-validates
+// with path.resolve() containment before any disk write, so this was never
+// actually exploitable end-to-end, but the regex shouldn't advertise a
+// guarantee it doesn't keep on its own.
 const SAFE_PATH = /^[A-Za-z0-9._-]+(\/[A-Za-z0-9._-]+)*$/;
+export function isSafePath(p: string): boolean {
+  return SAFE_PATH.test(p) && p.split("/").every((seg) => seg !== "." && seg !== "..");
+}
 
 function json(body: unknown, status = 200) {
   return new Response(JSON.stringify(body), {
@@ -53,7 +64,7 @@ export const Route = createFileRoute("/api/storage/upload")({
           if (!CATEGORIES.includes(category as FileCategory)) {
             return json({ ok: false, error: "Catégorie invalide" }, 400);
           }
-          if (!SAFE_PATH.test(relativePath)) {
+          if (!isSafePath(relativePath)) {
             return json({ ok: false, error: "Chemin invalide" }, 400);
           }
           if (!(file instanceof File)) {

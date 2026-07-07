@@ -64,7 +64,7 @@ type AssignmentRow = {
   expert_id: string | null;
 };
 
-function deriveStage(
+export function deriveStage(
   car: CarRow,
   auction: AuctionRow | undefined,
   assignment: AssignmentRow | undefined,

@@ -323,6 +323,23 @@ async function updateCar(id: string, patch: Partial<Car>): Promise<Car> {
 }
 
 async function deleteCar(id: string): Promise<void> {
+  // auctions.car_id cascades ON DELETE, which itself cascades to bids/offers/
+  // auto_bids — an unguarded delete here would silently destroy a car's
+  // entire auction/bid/payment history the moment it's ever been put up for
+  // auction, gated by nothing more than a plain confirm() dialog. Mirrors
+  // the same "no auction yet" guard vendeur's own cancelCar() already
+  // enforces (supabaseVendeurApi.ts) — admin shouldn't have a laxer bar.
+  const { data: auction, error: auctionErr } = await supabase
+    .from("auctions")
+    .select("id")
+    .eq("car_id", id)
+    .maybeSingle();
+  if (auctionErr) throw new Error(auctionErr.message);
+  if (auction) {
+    throw new Error(
+      "Impossible de supprimer : une enchère existe déjà pour cette voiture (historique préservé).",
+    );
+  }
   const { error } = await supabase.from("cars").delete().eq("id", id);
   if (error) throw new Error(error.message);
 }

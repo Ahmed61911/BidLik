@@ -8,9 +8,12 @@ import type { PaiementStatus } from "@/types/acheteur";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/acheteur/caution")({
-  validateSearch: (s: Record<string, unknown>) => ({
-    cmi: s.cmi === "ok" || s.cmi === "fail" ? (s.cmi as "ok" | "fail") : undefined,
-  }),
+  // Always including the `cmi` key (even as undefined) makes TanStack Router
+  // infer it as required, not optional — every <Link to="/acheteur/caution">
+  // without an explicit search prop then fails to typecheck. Returning
+  // Partial<> (omitting the key entirely when absent) is the fix.
+  validateSearch: (s: Record<string, unknown>): Partial<{ cmi: "ok" | "fail" }> =>
+    s.cmi === "ok" || s.cmi === "fail" ? { cmi: s.cmi } : {},
   component: CautionPage,
 });
 

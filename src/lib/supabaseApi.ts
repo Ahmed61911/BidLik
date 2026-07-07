@@ -138,7 +138,11 @@ function mapCar(row: Partial<CarRow> & { id: string; marque: string; modele: str
     minimumAcceptedPrice: row.minimum_accepted_price ?? undefined,
     // Only ever the expert's real uploaded commercial photos — never a
     // random stock substitute for a different car of the same brand.
-    images: row.images ?? [],
+    // images is a jsonb column with no shape constraint at the DB level —
+    // Array.isArray guards against a malformed non-array value crashing
+    // every consumer that calls .map()/.length on it (confirmed: a `{}`
+    // value here hard-crashes the whole auction detail page).
+    images: Array.isArray(row.images) ? row.images : [],
   };
 }
 
