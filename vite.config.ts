@@ -20,4 +20,14 @@ export default defineConfig({
     // Dockerfile's "prod" stage and docker-compose.yml's "storage-files" volume.
     preset: "node-server",
   },
+  vite: {
+    server: {
+      // Vite's dev server rejects requests whose Host header it doesn't
+      // recognize (DNS-rebinding protection) — without this, nginx
+      // correctly proxying bidlik.ma/api.bidlik.ma through still gets a
+      // 403 "Blocked request" straight from Vite itself. Only needed
+      // because the OVH VPS runs `vite dev`, not a built prod server.
+      allowedHosts: ["bidlik.ma", "www.bidlik.ma", "api.bidlik.ma"],
+    },
+  },
 });
