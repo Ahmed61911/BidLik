@@ -5,6 +5,7 @@ import { useAuth } from "@/lib/auth";
 import { formatMad } from "@/lib/format";
 import { supabase } from "@/integrations/supabase/client";
 import { storage, paymentPaths } from "@/lib/storage";
+import { acheteurStore, useMesPaiements } from "@/lib/supabaseAcheteurStore";
 import { toast } from "sonner";
 
 const CAUTION_AMOUNT = 5000;
@@ -24,6 +25,8 @@ export const Route = createFileRoute("/acheteur/caution-paiement")({
 function CautionPaiementPage() {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const paiements = useMesPaiements();
+  const hasPendingCaution = paiements.some((p) => p.type === "caution" && p.status === "en_attente");
 
   const [method, setMethod] = useState<Method>("virement");
   const [reference, setReference] = useState("");
@@ -37,8 +40,16 @@ function CautionPaiementPage() {
     if (user?.cautionValidee) {
       toast.info("Votre caution est déjà active.");
       navigate({ to: "/acheteur/caution" });
+      return;
     }
-  }, [user, navigate]);
+    // A submission is already awaiting admin review — resubmitting here would
+    // silently overwrite it (buyer_submit_caution reuses the same pending row),
+    // which is exactly what let someone "pay again" right after paying.
+    if (hasPendingCaution) {
+      toast.info("Votre justificatif est déjà en attente de validation.");
+      navigate({ to: "/acheteur/caution" });
+    }
+  }, [user, hasPendingCaution, navigate]);
 
   async function submit() {
     if (!file) return toast.error("Veuillez joindre un justificatif (image ou PDF).");
@@ -75,6 +86,10 @@ function CautionPaiementPage() {
       if (error) throw new Error(error.message);
 
       toast.success("Justificatif envoyé. Un administrateur va valider votre caution.");
+      // Refresh the store's own cache before navigating so /acheteur/caution
+      // shows "En attente" immediately, instead of waiting on the realtime
+      // round-trip (or a reconnect) to reflect the submission we just made.
+      await acheteurStore.refresh();
       navigate({ to: "/acheteur/caution" });
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Erreur d'envoi");

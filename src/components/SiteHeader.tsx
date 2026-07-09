@@ -48,7 +48,7 @@ export function SiteHeader() {
           {showHomeAndVehicules && <NavLink to="/auctions">Enchères</NavLink>}
           {showHomeAndVehicules && auth.isAuthenticated && <NavLink to="/vehicules">Véhicules</NavLink>}
           {auth.isAuthenticated && !isExpertOnly && !isAdmin && (
-            <NavLink to={isAcheteurOnly ? "/comment-ca-marche-acheteur" : "/comment-ca-marche"}>
+            <NavLink to={isAcheteurOnly ? "/comment-ca-marche-acheteur" : isVendeur ? "/comment-ca-marche-vendeur" : "/comment-ca-marche"}>
               Comment ça marche
             </NavLink>
           )}

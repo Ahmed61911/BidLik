@@ -67,6 +67,17 @@ async function sessionFromSupabase(): Promise<AuthSession | null> {
   const { data } = await supabase.auth.getSession();
   const s = data.session;
   if (!s) return null;
+  // Never surface a session for an account an admin hasn't activated yet —
+  // this is the single choke point every caller (onAuthStateChange, cached-session
+  // hydration on load, login()) goes through, so none of them can race past it.
+  // Only an explicit `false` counts as "not active" — a transient RPC/network
+  // error must NOT sign out an already-active user (same reasoning as
+  // loadProfileAndRoles below: don't flip a good session to anonymous over a blip).
+  const { data: activeData, error: activeErr } = await supabase.rpc("is_my_account_active");
+  if (!activeErr && activeData === false) {
+    await supabase.auth.signOut();
+    return null;
+  }
   const user = await loadProfileAndRoles(s.user.id, s.user.email ?? null);
   return {
     user,

@@ -62,6 +62,7 @@ import { Route as ApiStorageDownloadRouteImport } from './routes/api/storage/dow
 import { Route as ApiPublicSeedDemoRouteImport } from './routes/api/public/seed-demo'
 import { Route as ApiPublicCmiInitRouteImport } from './routes/api/public/cmi-init'
 import { Route as ApiPublicCmiCallbackRouteImport } from './routes/api/public/cmi-callback'
+import { Route as ApiPublicAdminResetPasswordRouteImport } from './routes/api/public/admin-reset-password'
 import { Route as ApiPublicAdminDeleteUserRouteImport } from './routes/api/public/admin-delete-user'
 import { Route as ApiPublicAdminCreateUserRouteImport } from './routes/api/public/admin-create-user'
 import { Route as AcheteurGagneesAuctionIdRouteImport } from './routes/acheteur.gagnees.$auctionId'
@@ -333,6 +334,12 @@ const ApiPublicCmiCallbackRoute = ApiPublicCmiCallbackRouteImport.update({
   path: '/api/public/cmi-callback',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicAdminResetPasswordRoute =
+  ApiPublicAdminResetPasswordRouteImport.update({
+    id: '/api/public/admin-reset-password',
+    path: '/api/public/admin-reset-password',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicAdminDeleteUserRoute =
   ApiPublicAdminDeleteUserRouteImport.update({
     id: '/api/public/admin-delete-user',
@@ -404,6 +411,7 @@ export interface FileRoutesByFullPath {
   '/acheteur/gagnees/$auctionId': typeof AcheteurGagneesAuctionIdRoute
   '/api/public/admin-create-user': typeof ApiPublicAdminCreateUserRoute
   '/api/public/admin-delete-user': typeof ApiPublicAdminDeleteUserRoute
+  '/api/public/admin-reset-password': typeof ApiPublicAdminResetPasswordRoute
   '/api/public/cmi-callback': typeof ApiPublicCmiCallbackRoute
   '/api/public/cmi-init': typeof ApiPublicCmiInitRoute
   '/api/public/seed-demo': typeof ApiPublicSeedDemoRoute
@@ -459,6 +467,7 @@ export interface FileRoutesByTo {
   '/acheteur/gagnees/$auctionId': typeof AcheteurGagneesAuctionIdRoute
   '/api/public/admin-create-user': typeof ApiPublicAdminCreateUserRoute
   '/api/public/admin-delete-user': typeof ApiPublicAdminDeleteUserRoute
+  '/api/public/admin-reset-password': typeof ApiPublicAdminResetPasswordRoute
   '/api/public/cmi-callback': typeof ApiPublicCmiCallbackRoute
   '/api/public/cmi-init': typeof ApiPublicCmiInitRoute
   '/api/public/seed-demo': typeof ApiPublicSeedDemoRoute
@@ -519,6 +528,7 @@ export interface FileRoutesById {
   '/acheteur/gagnees/$auctionId': typeof AcheteurGagneesAuctionIdRoute
   '/api/public/admin-create-user': typeof ApiPublicAdminCreateUserRoute
   '/api/public/admin-delete-user': typeof ApiPublicAdminDeleteUserRoute
+  '/api/public/admin-reset-password': typeof ApiPublicAdminResetPasswordRoute
   '/api/public/cmi-callback': typeof ApiPublicCmiCallbackRoute
   '/api/public/cmi-init': typeof ApiPublicCmiInitRoute
   '/api/public/seed-demo': typeof ApiPublicSeedDemoRoute
@@ -580,6 +590,7 @@ export interface FileRouteTypes {
     | '/acheteur/gagnees/$auctionId'
     | '/api/public/admin-create-user'
     | '/api/public/admin-delete-user'
+    | '/api/public/admin-reset-password'
     | '/api/public/cmi-callback'
     | '/api/public/cmi-init'
     | '/api/public/seed-demo'
@@ -635,6 +646,7 @@ export interface FileRouteTypes {
     | '/acheteur/gagnees/$auctionId'
     | '/api/public/admin-create-user'
     | '/api/public/admin-delete-user'
+    | '/api/public/admin-reset-password'
     | '/api/public/cmi-callback'
     | '/api/public/cmi-init'
     | '/api/public/seed-demo'
@@ -694,6 +706,7 @@ export interface FileRouteTypes {
     | '/acheteur/gagnees/$auctionId'
     | '/api/public/admin-create-user'
     | '/api/public/admin-delete-user'
+    | '/api/public/admin-reset-password'
     | '/api/public/cmi-callback'
     | '/api/public/cmi-init'
     | '/api/public/seed-demo'
@@ -729,6 +742,7 @@ export interface RootRouteChildren {
   EventsIndexRoute: typeof EventsIndexRoute
   ApiPublicAdminCreateUserRoute: typeof ApiPublicAdminCreateUserRoute
   ApiPublicAdminDeleteUserRoute: typeof ApiPublicAdminDeleteUserRoute
+  ApiPublicAdminResetPasswordRoute: typeof ApiPublicAdminResetPasswordRoute
   ApiPublicCmiCallbackRoute: typeof ApiPublicCmiCallbackRoute
   ApiPublicCmiInitRoute: typeof ApiPublicCmiInitRoute
   ApiPublicSeedDemoRoute: typeof ApiPublicSeedDemoRoute
@@ -1112,6 +1126,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicCmiCallbackRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/admin-reset-password': {
+      id: '/api/public/admin-reset-password'
+      path: '/api/public/admin-reset-password'
+      fullPath: '/api/public/admin-reset-password'
+      preLoaderRoute: typeof ApiPublicAdminResetPasswordRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/admin-delete-user': {
       id: '/api/public/admin-delete-user'
       path: '/api/public/admin-delete-user'
@@ -1267,6 +1288,7 @@ const rootRouteChildren: RootRouteChildren = {
   EventsIndexRoute: EventsIndexRoute,
   ApiPublicAdminCreateUserRoute: ApiPublicAdminCreateUserRoute,
   ApiPublicAdminDeleteUserRoute: ApiPublicAdminDeleteUserRoute,
+  ApiPublicAdminResetPasswordRoute: ApiPublicAdminResetPasswordRoute,
   ApiPublicCmiCallbackRoute: ApiPublicCmiCallbackRoute,
   ApiPublicCmiInitRoute: ApiPublicCmiInitRoute,
   ApiPublicSeedDemoRoute: ApiPublicSeedDemoRoute,

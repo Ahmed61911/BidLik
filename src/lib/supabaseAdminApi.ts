@@ -276,6 +276,20 @@ async function createUser(input: {
   };
 }
 
+async function resetUserPassword(userId: string, newPassword?: string): Promise<{ newPassword?: string }> {
+  const { data: sess } = await supabase.auth.getSession();
+  const token = sess.session?.access_token;
+  if (!token) throw new Error("Session expirée");
+  const res = await fetch("/api/public/admin-reset-password", {
+    method: "POST",
+    headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+    body: JSON.stringify({ userId, newPassword }),
+  });
+  const body = (await res.json()) as { ok: boolean; error?: string; newPassword?: string };
+  if (!res.ok || !body.ok) throw new Error(body.error ?? "Réinitialisation impossible");
+  return { newPassword: body.newPassword };
+}
+
 /* ──────────────────────────── cars ──────────────────────────── */
 
 async function listCars(): Promise<(Car & { proprietaireId: string })[]> {
@@ -717,6 +731,7 @@ export const supabaseAdminApi = {
   listUsers,
   toggleUserActive,
   createUser,
+  resetUserPassword,
   listCars,
   createCar,
   updateCar,

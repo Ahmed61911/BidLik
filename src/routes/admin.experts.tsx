@@ -83,12 +83,37 @@ function AdminExpertsPage() {
         ) : (
           <ul className="space-y-2">
             {inProgress.map((a) => (
-              <li key={a.id} className="flex items-center justify-between rounded-md border border-border p-3">
+              <li key={a.id} className="flex flex-col gap-2 rounded-md border border-border p-3 sm:flex-row sm:items-center sm:justify-between">
                 <div>
                   <p className="text-sm font-medium text-foreground"><span className="font-mono text-primary">#{a.carId}</span> — {a.carLabel}</p>
                   <p className="text-xs text-muted-foreground">Assigné à {a.expertNom} · le {a.assigneLe}</p>
                 </div>
-                <span className="rounded-full bg-warning/20 px-2 py-0.5 text-[11px] font-semibold text-warning-foreground">En inspection</span>
+                <div className="flex items-center gap-2">
+                  <span className="rounded-full bg-warning/20 px-2 py-0.5 text-[11px] font-semibold text-warning-foreground">En inspection</span>
+                  <Dropdown
+                    value={a.expertId ?? ""}
+                    placeholder="Réassigner…"
+                    ariaLabel="Réassigner à un autre expert"
+                    className="w-full sm:w-64"
+                    size="sm"
+                    onChange={async (expertId) => {
+                      if (!expertId || expertId === a.expertId) return;
+                      try {
+                        await supabaseAdminApi.assignExpert(a.carId, expertId);
+                        toast.success("Expert réassigné");
+                        refresh();
+                      } catch (err) {
+                        toast.error((err as Error).message);
+                      }
+                    }}
+                    options={experts
+                      .filter((ex) => ex.actif)
+                      .map((ex) => ({
+                        value: ex.id,
+                        label: `${ex.nom} — ${ex.ville} (${ex.inspectionsEnCours} en cours)`,
+                      }))}
+                  />
+                </div>
               </li>
             ))}
           </ul>

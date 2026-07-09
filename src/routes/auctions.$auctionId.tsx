@@ -7,7 +7,7 @@ import { getCarExpertise } from "@/lib/supabaseApi";
 import type { CarExpertise } from "@/types/expert";
 import { subscribeToAuction } from "@/lib/realtime";
 import type { Auction, Bid } from "@/types/auction";
-import { formatMad, formatDateTime, formatDateTimePrecise, listingPriceTier, priceTierTextClass, priceTierGradientClass, timeRemaining } from "@/lib/format";
+import { formatMad, formatDateTime, formatDateTimePrecise, formatBidInterval, microsecondsBetween, listingPriceTier, priceTierTextClass, priceTierGradientClass, timeRemaining } from "@/lib/format";
 import { Countdown } from "@/components/Countdown";
 import { CarGallery } from "@/components/CarGallery";
 import { storage } from "@/lib/storage";
@@ -413,25 +413,37 @@ function AuctionDetailPage() {
                   </p>
                 ) : (
                   <ul className="divide-y divide-border">
-                    {bids.map((b, i) => (
-                      <li key={b.id} className={["flex items-center justify-between gap-3 px-4 py-3 text-sm", i === 0 ? "bg-accent/5" : ""].join(" ")}>
-                        <div className="flex items-center gap-3">
-                          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-secondary text-xs font-bold text-secondary-foreground">
-                            {b.bidderName.slice(0, 2).toUpperCase()}
+                    {bids.map((b, i) => {
+                      // bids is newest-first (ORDER BY created_at DESC), so the bid
+                      // this one followed chronologically is the NEXT entry in the array.
+                      const previousBid = bids[i + 1];
+                      return (
+                        <li key={b.id} className={["flex items-center justify-between gap-3 px-4 py-3 text-sm", i === 0 ? "bg-accent/5" : ""].join(" ")}>
+                          <div className="flex items-center gap-3">
+                            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-secondary text-xs font-bold text-secondary-foreground">
+                              {b.bidderName.slice(0, 2).toUpperCase()}
+                            </div>
+                            <div>
+                              <p className="font-semibold text-foreground">{b.bidderName}</p>
+                              <p className="text-xs text-muted-foreground">{formatDateTimePrecise(b.createdAt)}</p>
+                              {previousBid ? (
+                                <p className="text-[11px] text-muted-foreground/80">
+                                  +{formatBidInterval(microsecondsBetween(previousBid.createdAt, b.createdAt))} après l'offre précédente
+                                </p>
+                              ) : (
+                                <p className="text-[11px] text-muted-foreground/80">Offre d'ouverture</p>
+                              )}
+                            </div>
                           </div>
-                          <div>
-                            <p className="font-semibold text-foreground">{b.bidderName}</p>
-                            <p className="text-xs text-muted-foreground">{formatDateTimePrecise(b.createdAt)}</p>
+                          <div className="flex items-center gap-2">
+                            {b.isAuto && (
+                              <span className="rounded-full bg-secondary px-2 py-0.5 text-[10px] font-semibold text-secondary-foreground">AUTO</span>
+                            )}
+                            <span className={`font-bold ${bidAmountClass(b.amount)}`}>{formatMad(b.amount)}</span>
                           </div>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          {b.isAuto && (
-                            <span className="rounded-full bg-secondary px-2 py-0.5 text-[10px] font-semibold text-secondary-foreground">AUTO</span>
-                          )}
-                          <span className={`font-bold ${bidAmountClass(b.amount)}`}>{formatMad(b.amount)}</span>
-                        </div>
-                      </li>
-                    ))}
+                        </li>
+                      );
+                    })}
                   </ul>
                 )}
               </div>

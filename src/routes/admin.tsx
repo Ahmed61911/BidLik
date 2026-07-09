@@ -3,6 +3,7 @@ import { createFileRoute, Link, Outlet, useRouterState } from "@tanstack/react-r
 import { LayoutDashboard, Car, Users, ClipboardCheck, ShieldCheck, BarChart3, Gavel, ChevronDown, Wallet, UserCheck, Coins } from "lucide-react";
 
 import { requireRole } from "@/lib/routeGuard";
+import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/admin")({
   beforeLoad: ({ location }) => requireRole(["admin"], location.href),
@@ -16,22 +17,67 @@ export const Route = createFileRoute("/admin")({
   component: AdminLayout,
 });
 
+type CountKey = "accounts" | "cautions" | "validations";
+
 const NAV = [
-  { to: "/admin", label: "Vue d'ensemble", icon: LayoutDashboard, exact: true },
-  { to: "/admin/voitures", label: "Voitures", icon: Car, exact: false },
-  { to: "/admin/encheres", label: "Créer enchère", icon: Gavel, exact: false },
-  { to: "/admin/experts", label: "Experts", icon: ShieldCheck, exact: false },
-  { to: "/admin/validations", label: "Validations", icon: ClipboardCheck, exact: false },
-  { to: "/admin/paiements", label: "Paiements", icon: Wallet, exact: false },
-  { to: "/admin/cautions", label: "Cautions", icon: Coins, exact: false },
-  { to: "/admin/utilisateurs", label: "Utilisateurs", icon: Users, exact: false },
-  { to: "/admin/verifications", label: "Validation comptes", icon: UserCheck, exact: false },
-  { to: "/admin/analytics", label: "Analytics", icon: BarChart3, exact: false },
-] as const;
+  { to: "/admin", label: "Vue d'ensemble", icon: LayoutDashboard, exact: true, countKey: undefined },
+  { to: "/admin/voitures", label: "Voitures", icon: Car, exact: false, countKey: undefined },
+  { to: "/admin/encheres", label: "Créer enchère", icon: Gavel, exact: false, countKey: undefined },
+  { to: "/admin/experts", label: "Experts", icon: ShieldCheck, exact: false, countKey: undefined },
+  { to: "/admin/validations", label: "Validations", icon: ClipboardCheck, exact: false, countKey: "validations" },
+  { to: "/admin/paiements", label: "Paiements", icon: Wallet, exact: false, countKey: undefined },
+  { to: "/admin/cautions", label: "Cautions", icon: Coins, exact: false, countKey: "cautions" },
+  { to: "/admin/utilisateurs", label: "Utilisateurs", icon: Users, exact: false, countKey: undefined },
+  { to: "/admin/verifications", label: "Validation comptes", icon: UserCheck, exact: false, countKey: "accounts" },
+  { to: "/admin/analytics", label: "Analytics", icon: BarChart3, exact: false, countKey: undefined },
+] as const satisfies ReadonlyArray<{
+  to: string;
+  label: string;
+  icon: typeof LayoutDashboard;
+  exact: boolean;
+  countKey?: CountKey;
+}>;
+
+function usePendingCounts(): Record<CountKey, number> {
+  const [counts, setCounts] = useState<Record<CountKey, number>>({ accounts: 0, cautions: 0, validations: 0 });
+
+  useEffect(() => {
+    let cancelled = false;
+    async function load() {
+      const [accounts, cautions, validations] = await Promise.all([
+        supabase.from("profiles").select("user_id", { count: "exact", head: true }).eq("actif", false),
+        supabase.from("payments").select("id", { count: "exact", head: true }).eq("type", "caution").eq("status", "en_attente"),
+        supabase.from("auctions").select("id", { count: "exact", head: true }).eq("status", "closed"),
+      ]);
+      if (cancelled) return;
+      setCounts({
+        accounts: accounts.count ?? 0,
+        cautions: cautions.count ?? 0,
+        validations: validations.count ?? 0,
+      });
+    }
+    void load();
+    // Cheap head-count queries — poll so badges clear/update without a full page reload.
+    const interval = setInterval(load, 30_000);
+    return () => { cancelled = true; clearInterval(interval); };
+  }, []);
+
+  return counts;
+}
+
+function NavBadge({ count }: { count: number }) {
+  if (count <= 0) return null;
+  return (
+    <span className="ml-auto inline-flex h-5 min-w-5 shrink-0 items-center justify-center rounded-full bg-destructive px-1.5 text-[11px] font-semibold text-destructive-foreground">
+      {count > 99 ? "99+" : count}
+    </span>
+  );
+}
 
 function AdminLayout() {
   const path = useRouterState({ select: (s) => s.location.pathname });
   const [mobileOpen, setMobileOpen] = useState(false);
+  const counts = usePendingCounts();
 
   const current = NAV.find((item) => (item.exact ? path === item.to : path.startsWith(item.to))) ?? NAV[0];
   const CurrentIcon = current.icon;
@@ -85,6 +131,7 @@ function AdminLayout() {
                 >
                   <Icon className="h-4 w-4" />
                   <span>{item.label}</span>
+                  {item.countKey && <NavBadge count={counts[item.countKey]} />}
                 </Link>
               );
             })}
@@ -111,6 +158,7 @@ function AdminLayout() {
                 >
                   <Icon className="h-4 w-4" />
                   <span>{item.label}</span>
+                  {item.countKey && <NavBadge count={counts[item.countKey]} />}
                 </Link>
               );
             })}

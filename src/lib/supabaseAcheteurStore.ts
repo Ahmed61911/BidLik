@@ -408,6 +408,12 @@ export const acheteurStore = {
     await supabase.from("notifications").update({ read: true }).eq("id", id);
     void refreshAll();
   },
+  // Force an immediate refetch right after a mutation the acting user just made
+  // (e.g. submitting a caution proof) — don't make them wait on the realtime
+  // round-trip just to see their own change reflected.
+  async refresh() {
+    await refreshAll();
+  },
   subscribe(l: () => void) {
     install();
     listeners.add(l);
