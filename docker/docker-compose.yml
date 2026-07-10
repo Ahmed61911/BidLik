@@ -28,9 +28,10 @@
 #   studio    Supabase Studio admin UI.
 #   kong      API gateway — single entry point at :8000 for auth/rest/
 #             storage/realtime/functions.
-#   functions Edge Runtime (Deno) — present for parity; the app ships no
-#             Edge Functions today (see supabase/functions/hello for a
-#             placeholder so the container has something to serve).
+#   functions Edge Runtime (Deno). Serves supabase/functions/main, a small
+#             router mounting the real functions (send-push, used by the
+#             mobile app's push notification trigger) alongside the unused
+#             hello placeholder.
 #   app       The TanStack Start app itself, dev-mode, so `docker compose up`
 #             starts the whole project with one command (see Dockerfile at
 #             the repo root for why this runs `bun run dev`, not a prod build).
@@ -207,7 +208,7 @@ services:
       VERIFY_JWT: "false"
     volumes:
       - ../supabase/functions:/home/deno/functions:ro
-    command: ["start", "--main-service", "/home/deno/functions/hello"]
+    command: ["start", "--main-service", "/home/deno/functions/main"]
 
   kong:
     image: kong:3.4
