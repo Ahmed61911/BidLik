@@ -1,0 +1,54 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/*
+ * Bidlik design tokens — ported from webapp/src/styles.css.
+ * Brand: Navy #1F2D4D + Orange-Red #E94E2C.
+ * Source tokens are defined in OKLCH there; approximated to sRGB here since
+ * React Native's color parser doesn't support oklch(). Refine with exact
+ * conversions during the visual-polish pass if needed.
+ */
+:root {
+  --color-background: 250 251 252;
+  --color-foreground: 34 40 58;
+  --color-card: 255 255 255;
+  --color-card-foreground: 34 40 58;
+  --color-primary: 31 45 77;
+  --color-primary-foreground: 250 251 252;
+  --color-secondary: 241 242 245;
+  --color-secondary-foreground: 31 45 77;
+  --color-muted: 241 242 245;
+  --color-muted-foreground: 107 114 128;
+  --color-accent: 233 78 44;
+  --color-accent-foreground: 255 255 255;
+  --color-destructive: 220 38 38;
+  --color-destructive-foreground: 255 255 255;
+  --color-success: 22 163 74;
+  --color-success-foreground: 255 255 255;
+  --color-warning: 232 166 61;
+  --color-warning-foreground: 34 40 58;
+  --color-border: 228 228 231;
+}
+
+.dark:root {
+  --color-background: 20 22 31;
+  --color-foreground: 247 248 250;
+  --color-card: 34 40 58;
+  --color-card-foreground: 247 248 250;
+  --color-primary: 247 248 250;
+  --color-primary-foreground: 31 45 77;
+  --color-secondary: 49 58 82;
+  --color-secondary-foreground: 247 248 250;
+  --color-muted: 49 58 82;
+  --color-muted-foreground: 168 173 184;
+  --color-accent: 233 78 44;
+  --color-accent-foreground: 255 255 255;
+  --color-destructive: 248 113 113;
+  --color-destructive-foreground: 20 22 31;
+  --color-success: 74 222 128;
+  --color-success-foreground: 20 22 31;
+  --color-warning: 251 191 36;
+  --color-warning-foreground: 20 22 31;
+  --color-border: 63 63 70;
+}

@@ -1,0 +1,53 @@
+{
+  "expo": {
+    "name": "Bidlik",
+    "slug": "bidlik-mobile",
+    "version": "1.0.0",
+    "scheme": "bidlik",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "automatic",
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.bidlik.mobile",
+      "infoPlist": {
+        "NSFaceIDUsageDescription": "Utilisez Face ID pour déverrouiller Bidlik."
+      }
+    },
+    "android": {
+      "adaptiveIcon": {
+        "backgroundColor": "#E6F4FE",
+        "foregroundImage": "./assets/android-icon-foreground.png",
+        "backgroundImage": "./assets/android-icon-background.png",
+        "monochromeImage": "./assets/android-icon-monochrome.png"
+      },
+      "predictiveBackGestureEnabled": false,
+      "package": "com.bidlik.mobile"
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "plugins": [
+      "expo-secure-store",
+      "expo-image",
+      "expo-splash-screen",
+      [
+        "expo-notifications",
+        {
+          "color": "#E94E2C"
+        }
+      ],
+      [
+        "expo-local-authentication",
+        {
+          "faceIDPermission": "Utilisez Face ID pour déverrouiller Bidlik."
+        }
+      ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": ""
+      }
+    }
+  }
+}
