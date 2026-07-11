@@ -10,6 +10,7 @@ import { CarGallery } from "@/components/CarGallery";
 import { DeadlineCountdown } from "@/components/DeadlineCountdown";
 import { requireRole } from "@/lib/routeGuard";
 import { resolveCarImageUrl } from "@/lib/carImages";
+import { AuthGate } from "@/components/AuthGate";
 
 type WonAuction = {
   id: string;
@@ -45,7 +46,6 @@ type WonCar = {
   payment_status: "non_paye" | "paye";
   delivery_status: "non_livre" | "livre";
   images: string[] | null;
-  expert_images: string[] | null;
   vendeur_nom: string;
 };
 type WonPayload = { auction: WonAuction; car: WonCar };
@@ -143,6 +143,7 @@ function WonCarDetailsPage() {
   const images = (car.images ?? []).map(resolveCarImageUrl);
 
   return (
+    <AuthGate roles={["acheteur"]}>
     <div className="space-y-5">
       <Link
         to="/acheteur/gagnees"
@@ -272,6 +273,7 @@ function WonCarDetailsPage() {
         </section>
       )}
     </div>
+    </AuthGate>
   );
 }
 

@@ -1,6 +1,7 @@
 import { createFileRoute, Outlet } from "@tanstack/react-router";
 
 import { requireRole } from "@/lib/routeGuard";
+import { AuthGate } from "@/components/AuthGate";
 
 export const Route = createFileRoute("/expert")({
   beforeLoad: ({ location }) => requireRole(["expert", "admin"], location.href),
@@ -16,6 +17,7 @@ export const Route = createFileRoute("/expert")({
 
 function ExpertLayout() {
   return (
+    <AuthGate roles={["expert", "admin"]}>
     <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:py-10">
       <div className="mb-6 border-b border-border pb-4">
         <p className="text-xs font-semibold uppercase tracking-wider text-accent">Espace expert</p>
@@ -25,5 +27,6 @@ function ExpertLayout() {
         <Outlet />
       </div>
     </div>
+    </AuthGate>
   );
 }

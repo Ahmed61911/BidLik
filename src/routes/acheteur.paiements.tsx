@@ -1,14 +1,12 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
-import { FileText, Upload, X } from "lucide-react";
+import { FileText } from "lucide-react";
 
 import { toast } from "sonner";
 import {
   useMesPaiements,
   signedPaymentProofUrl,
   listMyPendingPaymentAuctions,
-  uploadBuyerProof,
-  submitBuyerPayment,
   type PendingPaymentAuction,
 } from "@/lib/supabaseAcheteurStore";
 import { formatMad } from "@/lib/format";
@@ -48,7 +46,6 @@ const STATUS_LABEL: Record<string, string> = {
 function PaiementsPage() {
   const paiements = useMesPaiements();
   const [pending, setPending] = useState<PendingPaymentAuction[]>([]);
-  const [submitting, setSubmitting] = useState<PendingPaymentAuction | null>(null);
 
   // Filters
   const [query, setQuery] = useState("");
@@ -135,6 +132,9 @@ function PaiementsPage() {
               À régler — 48h après validation
             </h3>
           </div>
+          <p className="mb-3 text-xs text-muted-foreground">
+            Réglez ce montant directement auprès de Bidlik — un administrateur enregistrera votre paiement dès réception.
+          </p>
           <ul className="space-y-3">
             {pending.map((p) => {
               const isPending = p.paymentStatus === "en_attente";
@@ -162,24 +162,13 @@ function PaiementsPage() {
                           Paiement validé
                         </span>
                       ) : isPending ? (
-                        <>
-                          <span className="rounded-full bg-amber-100 px-3 py-1 text-xs font-semibold text-amber-900">
-                            En vérification admin
-                          </span>
-                          <button
-                            onClick={() => setSubmitting(p)}
-                            className="inline-flex h-9 items-center gap-1.5 rounded-md border border-border bg-background px-3 text-sm font-semibold hover:bg-secondary"
-                          >
-                            Remplacer
-                          </button>
-                        </>
+                        <span className="rounded-full bg-amber-100 px-3 py-1 text-xs font-semibold text-amber-900">
+                          En vérification admin
+                        </span>
                       ) : (
-                        <button
-                          onClick={() => setSubmitting(p)}
-                          className="inline-flex h-9 items-center gap-1.5 rounded-md bg-primary px-3 text-sm font-semibold text-primary-foreground shadow-sm hover:opacity-90"
-                        >
-                          <Upload className="h-4 w-4" /> Soumettre le paiement
-                        </button>
+                        <span className="rounded-full bg-secondary px-3 py-1 text-xs font-semibold text-secondary-foreground">
+                          En attente de règlement
+                        </span>
                       )}
                     </div>
                   </div>
@@ -368,180 +357,6 @@ function PaiementsPage() {
           </>
         )}
       </div>
-
-
-      {submitting && (
-        <SubmitPaymentDialog
-          item={submitting}
-          onClose={() => setSubmitting(null)}
-          onSaved={() => {
-            setSubmitting(null);
-            refreshPending();
-          }}
-        />
-      )}
-    </div>
-  );
-}
-
-function SubmitPaymentDialog({
-  item,
-  onClose,
-  onSaved,
-}: {
-  item: PendingPaymentAuction;
-  onClose: () => void;
-  onSaved: () => void;
-}) {
-  const [amount, setAmount] = useState(item.prixFinal);
-  const [reference, setReference] = useState("");
-  const [notes, setNotes] = useState("");
-  const [paymentMethod, setPaymentMethod] = useState<string>("virement");
-  const [bank, setBank] = useState("");
-  const [dueDate, setDueDate] = useState("");
-  const [file, setFile] = useState<File | null>(null);
-  const [saving, setSaving] = useState(false);
-
-  const submit = async () => {
-    if (!file) return toast.error("Veuillez joindre un justificatif (PDF ou image)");
-    if (!amount || amount <= 0) return toast.error("Montant invalide");
-    if (!reference.trim()) return toast.error("Référence du virement requise");
-    if (paymentMethod === "cheque" && !dueDate)
-      return toast.error("Date d'échéance du chèque requise");
-    setSaving(true);
-    try {
-      const up = await uploadBuyerProof(file, item.carId);
-      await submitBuyerPayment({
-        auctionId: item.auctionId,
-        amount,
-        reference: reference.trim(),
-        proofUrl: up.path,
-        proofName: up.name,
-        notes,
-        paymentMethod,
-        bank: bank.trim() || null,
-        dueDate: paymentMethod === "cheque" ? dueDate : null,
-      });
-      toast.success("Paiement soumis — en attente de vérification");
-      onSaved();
-    } catch (e) {
-      toast.error((e as Error).message);
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
-      <div className="w-full max-w-md rounded-xl border border-border bg-background p-5 shadow-xl">
-        <div className="flex items-center justify-between">
-          <h3 className="text-base font-semibold">Soumettre le paiement</h3>
-          <button onClick={onClose} className="rounded-md p-1 hover:bg-secondary">
-            <X className="h-4 w-4" />
-          </button>
-        </div>
-        <p className="mt-1 text-xs text-muted-foreground">
-          {item.marque} {item.modele} ({item.annee}) — {formatMad(item.prixFinal)}
-        </p>
-        <div className="mt-2">
-          <DeadlineCountdown deadline={item.paymentDeadline} label="Délai restant" />
-        </div>
-
-        <div className="mt-4 space-y-3">
-          <Field label="Montant payé (DH)">
-            <input
-              type="number"
-              value={amount}
-              onChange={(e) => setAmount(Number(e.target.value))}
-              className="h-9 w-full rounded-md border border-border bg-background px-2 text-sm"
-            />
-          </Field>
-          <Field label="Mode de paiement">
-            <select
-              value={paymentMethod}
-              onChange={(e) => setPaymentMethod(e.target.value)}
-              className="h-9 w-full rounded-md border border-border bg-background px-2 text-sm"
-            >
-              <option value="virement">Virement bancaire</option>
-              <option value="cheque">Chèque</option>
-              <option value="especes">Espèces</option>
-              <option value="carte">Carte bancaire</option>
-              <option value="autre">Autre</option>
-            </select>
-          </Field>
-          <Field label="Référence du virement / chèque">
-            <input
-              value={reference}
-              onChange={(e) => setReference(e.target.value)}
-              placeholder="VIR-2026-..."
-              className="h-9 w-full rounded-md border border-border bg-background px-2 text-sm"
-            />
-          </Field>
-          <Field label="Banque">
-            <input
-              value={bank}
-              onChange={(e) => setBank(e.target.value)}
-              placeholder="Attijariwafa, BMCE, CIH…"
-              className="h-9 w-full rounded-md border border-border bg-background px-2 text-sm"
-            />
-          </Field>
-          {paymentMethod === "cheque" && (
-            <Field label="Date d'échéance du chèque">
-              <input
-                type="date"
-                value={dueDate}
-                onChange={(e) => setDueDate(e.target.value)}
-                className="h-9 w-full rounded-md border border-border bg-background px-2 text-sm"
-              />
-            </Field>
-          )}
-          <Field label="Notes (optionnel)">
-            <textarea
-              value={notes}
-              onChange={(e) => setNotes(e.target.value)}
-              rows={2}
-              className="w-full rounded-md border border-border bg-background px-2 py-1.5 text-sm"
-            />
-          </Field>
-          <Field label="Justificatif (PDF, image)">
-            <label className="flex h-20 cursor-pointer items-center justify-center gap-2 rounded-md border border-dashed border-border bg-background text-sm text-muted-foreground hover:bg-secondary/50">
-              <Upload className="h-4 w-4" />
-              {file ? file.name : "Choisir un fichier"}
-              <input
-                type="file"
-                accept="application/pdf,image/*"
-                onChange={(e) => setFile(e.target.files?.[0] ?? null)}
-                className="hidden"
-              />
-            </label>
-          </Field>
-        </div>
-
-        <div className="mt-5 flex justify-end gap-2">
-          <button
-            onClick={onClose}
-            className="h-9 rounded-md border border-border px-3 text-sm hover:bg-secondary"
-          >
-            Annuler
-          </button>
-          <button
-            onClick={submit}
-            disabled={saving}
-            className="h-9 rounded-md bg-primary px-3 text-sm font-semibold text-primary-foreground shadow-sm hover:opacity-90 disabled:opacity-50"
-          >
-            {saving ? "Envoi…" : "Soumettre"}
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function Field({ label, children }: { label: string; children: React.ReactNode }) {
-  return (
-    <div>
-      <label className="mb-1 block text-xs font-medium text-muted-foreground">{label}</label>
-      {children}
     </div>
   );
 }

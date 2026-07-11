@@ -2,6 +2,7 @@ import { createFileRoute, Link, Outlet, useLocation } from "@tanstack/react-rout
 import { ArrowLeft } from "lucide-react";
 
 import { requireRole } from "@/lib/routeGuard";
+import { AuthGate } from "@/components/AuthGate";
 
 const PAGE_META: Record<string, { title: string; description: string }> = {
   "/vendeur/voitures": { title: "Mes voitures", description: "Tous vos véhicules soumis et leur statut." },
@@ -29,6 +30,7 @@ function VendeurLayout() {
   const meta = PAGE_META[path];
 
   return (
+    <AuthGate roles={["vendeur", "admin"]}>
     <div className="mx-auto max-w-7xl px-4 py-5 sm:px-6 sm:py-6 lg:py-10">
       <div className="mb-5 flex flex-col gap-2 border-b border-border pb-4 sm:mb-6">
         {isOverview ? (
@@ -58,5 +60,6 @@ function VendeurLayout() {
         <Outlet />
       </section>
     </div>
+    </AuthGate>
   );
 }

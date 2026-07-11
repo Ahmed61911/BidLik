@@ -4,6 +4,7 @@ import { LayoutDashboard, Car, Users, ClipboardCheck, ShieldCheck, BarChart3, Ga
 
 import { requireRole } from "@/lib/routeGuard";
 import { supabase } from "@/integrations/supabase/client";
+import { AuthGate } from "@/components/AuthGate";
 
 export const Route = createFileRoute("/admin")({
   beforeLoad: ({ location }) => requireRole(["admin"], location.href),
@@ -88,6 +89,7 @@ function AdminLayout() {
   }, [path]);
 
   return (
+    <AuthGate roles={["admin"]}>
     <div className="mx-auto max-w-7xl px-3 py-4 sm:px-6 lg:py-10">
       <div className="mb-4 border-b border-border pb-3 sm:mb-6 sm:pb-4">
         <p className="text-[11px] font-semibold uppercase tracking-wider text-accent sm:text-xs">
@@ -170,5 +172,6 @@ function AdminLayout() {
         </section>
       </div>
     </div>
+    </AuthGate>
   );
 }

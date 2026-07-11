@@ -10,6 +10,7 @@ import { requireRole } from "@/lib/routeGuard";
 import { useAuth } from "@/lib/auth";
 import { supabaseVendeurApi } from "@/lib/supabaseVendeurApi";
 import type { Auction } from "@/types/auction";
+import { AuthGate } from "@/components/AuthGate";
 
 export const Route = createFileRoute("/events/$eventId")({
   beforeLoad: ({ location }) => requireRole(["acheteur", "admin", "vendeur"], location.href),
@@ -68,6 +69,7 @@ function EventDetailPage() {
   const isScheduled = event.status === "scheduled";
 
   return (
+    <AuthGate roles={["acheteur", "admin", "vendeur"]}>
     <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6">
       <Link to="/events" className="text-sm text-muted-foreground hover:text-foreground">
         ← Retour aux événements
@@ -185,5 +187,6 @@ function EventDetailPage() {
         )}
       </section>
     </div>
+    </AuthGate>
   );
 }

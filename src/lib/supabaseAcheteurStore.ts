@@ -256,7 +256,7 @@ function install() {
   channel.subscribe();
 }
 
-import { storage, paymentPaths } from "@/lib/storage";
+import { storage } from "@/lib/storage";
 
 export async function signedPaymentProofUrl(path: string): Promise<string> {
   return storage.signedUrl("payment-proofs", path);
@@ -344,53 +344,6 @@ export async function listMyPendingPaymentAuctions(): Promise<PendingPaymentAuct
       proofName: p?.proof_name ?? null,
     };
   });
-}
-
-/**
- * Upload a buyer's payment proof for a car they've won.
- * File is stored under `cars/{carId}/payments/…` via the central storage service.
- */
-export async function uploadBuyerProof(
-  file: File,
-  carId: string,
-): Promise<{ path: string; name: string }> {
-  const { data: userData } = await supabase.auth.getUser();
-  const uid = userData.user?.id;
-  if (!uid) throw new Error("Connexion requise");
-  if (!carId) throw new Error("Véhicule requis");
-  const result = await storage.uploadFile({
-    file,
-    bucket: "payment-proofs",
-    category: "car-payment",
-    carId,
-    buildPath: (ext) => paymentPaths.carPayment(uid, ext),
-  });
-  return { path: result.path, name: result.name };
-}
-
-export async function submitBuyerPayment(input: {
-  auctionId: string;
-  amount: number;
-  reference: string;
-  proofUrl: string;
-  proofName: string;
-  notes?: string;
-  paymentMethod?: string | null;
-  bank?: string | null;
-  dueDate?: string | null;
-}): Promise<void> {
-  const { error } = await supabase.rpc("buyer_submit_payment", {
-    p_auction_id: input.auctionId,
-    p_amount: Math.round(input.amount),
-    p_reference: input.reference,
-    p_proof_url: input.proofUrl,
-    p_proof_name: input.proofName,
-    p_notes: input.notes ?? "",
-    p_payment_method: input.paymentMethod ?? null,
-    p_bank: input.bank ?? null,
-    p_due_date: input.dueDate ?? null,
-  } as never);
-  if (error) throw new Error(error.message);
 }
 
 export const acheteurStore = {

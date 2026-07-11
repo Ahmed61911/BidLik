@@ -17,6 +17,7 @@ import { useAuth } from "@/lib/auth";
 import { playBidPlacedSound, playOutbidSound, playUrgencyTick } from "@/lib/sounds";
 
 import { requireRole } from "@/lib/routeGuard";
+import { AuthGate } from "@/components/AuthGate";
 
 export const Route = createFileRoute("/auctions/$auctionId")({
   beforeLoad: ({ location }) => requireRole(["acheteur", "admin", "vendeur"], location.href),
@@ -334,6 +335,7 @@ function AuctionDetailPage() {
   }
 
   return (
+    <AuthGate roles={["acheteur", "admin", "vendeur"]}>
     <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6">
       <Link to="/auctions" className="text-sm text-muted-foreground hover:text-foreground">
         ← Retour aux enchères
@@ -663,6 +665,7 @@ function AuctionDetailPage() {
         </aside>
       </div>
     </div>
+    </AuthGate>
   );
 }
 

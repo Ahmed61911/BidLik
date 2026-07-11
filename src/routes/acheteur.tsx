@@ -3,6 +3,7 @@ import { createFileRoute, Link, Outlet, useRouterState } from "@tanstack/react-r
 import { LayoutDashboard, Gavel, Trophy, Wallet, Bell, Receipt, ChevronDown } from "lucide-react";
 import { requireRole } from "@/lib/routeGuard";
 import { useMesNotifications } from "@/lib/supabaseAcheteurStore";
+import { AuthGate } from "@/components/AuthGate";
 
 export const Route = createFileRoute("/acheteur")({
   beforeLoad: ({ location }) => requireRole(["acheteur"], location.href),
@@ -40,6 +41,7 @@ function AcheteurLayout() {
   }, [path]);
 
   return (
+    <AuthGate roles={["acheteur"]}>
     <div className="mx-auto max-w-7xl px-3 py-5 sm:px-6 lg:py-10">
       <div className="mb-4 border-b border-border pb-3 sm:mb-6 sm:pb-4">
         <p className="text-[11px] font-semibold uppercase tracking-wider text-accent sm:text-xs">
@@ -136,5 +138,6 @@ function AcheteurLayout() {
         </section>
       </div>
     </div>
+    </AuthGate>
   );
 }

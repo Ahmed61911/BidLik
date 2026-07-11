@@ -9,6 +9,7 @@ import { useAuth } from "@/lib/auth";
 import { supabaseVendeurApi } from "@/lib/supabaseVendeurApi";
 import { resolveCarImageUrl } from "@/lib/carImages";
 import { Dropdown } from "@/components/ui/dropdown";
+import { AuthGate } from "@/components/AuthGate";
 
 export const Route = createFileRoute("/vehicules")({
   beforeLoad: ({ location }) => requireAuth(location.href),
@@ -81,6 +82,7 @@ function VehiculesPage() {
   });
 
   return (
+    <AuthGate>
     <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6">
       <header className="mb-6">
         <h1 className="text-2xl font-bold text-foreground sm:text-3xl">Véhicules</h1>
@@ -161,6 +163,7 @@ function VehiculesPage() {
         </div>
       )}
     </div>
+    </AuthGate>
   );
 }
 

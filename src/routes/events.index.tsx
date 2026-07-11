@@ -9,6 +9,7 @@ import { requireRole } from "@/lib/routeGuard";
 import { useAuth } from "@/lib/auth";
 import { supabaseVendeurApi } from "@/lib/supabaseVendeurApi";
 import { supabase } from "@/integrations/supabase/client";
+import { AuthGate } from "@/components/AuthGate";
 
 type Filter = "live" | "closed";
 type Search = { filter?: Filter };
@@ -67,6 +68,7 @@ function EventsListPage() {
   }, [filter, isVendeurOnly]);
 
   return (
+    <AuthGate roles={["acheteur", "admin", "vendeur"]}>
     <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6">
       <header className="mb-6">
         <h1 className="text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
@@ -149,6 +151,7 @@ function EventsListPage() {
         </ul>
       )}
     </div>
+    </AuthGate>
   );
 }
 
