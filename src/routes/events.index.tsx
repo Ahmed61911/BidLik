@@ -10,6 +10,8 @@ import { useAuth } from "@/lib/auth";
 import { supabaseVendeurApi } from "@/lib/supabaseVendeurApi";
 import { supabase } from "@/integrations/supabase/client";
 import { AuthGate } from "@/components/AuthGate";
+import { usePagination } from "@/hooks/use-pagination";
+import { ListPagination } from "@/components/ListPagination";
 
 type Filter = "live" | "closed";
 type Search = { filter?: Filter };
@@ -66,6 +68,7 @@ function EventsListPage() {
     };
     void load();
   }, [filter, isVendeurOnly]);
+  const { page, setPage, pageCount, pageItems: paged } = usePagination(events, 12);
 
   return (
     <AuthGate roles={["acheteur", "admin", "vendeur"]}>
@@ -96,7 +99,7 @@ function EventsListPage() {
         </div>
       ) : (
         <ul className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-          {events.map((ev) => (
+          {paged.map((ev) => (
             <li key={ev.id}>
               <Link
                 to="/events/$eventId"
@@ -150,6 +153,7 @@ function EventsListPage() {
           ))}
         </ul>
       )}
+      <ListPagination page={page} pageCount={pageCount} onPageChange={setPage} />
     </div>
     </AuthGate>
   );

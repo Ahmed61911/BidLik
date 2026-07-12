@@ -7,6 +7,8 @@ import type { PendingValidation } from "@/types/admin";
 import type { ProcessedValidation } from "@/lib/supabaseAdminApi";
 import { formatMad } from "@/lib/format";
 import { DeadlineCountdown } from "@/components/DeadlineCountdown";
+import { usePagination } from "@/hooks/use-pagination";
+import { ListPagination } from "@/components/ListPagination";
 
 type ValidationTier = "low" | "mid" | "high";
 function validationTier(prixFinal: number, prixPlancher: number): ValidationTier {
@@ -65,6 +67,8 @@ function AdminValidationsPage() {
     }
   };
 
+  const pendingPage = usePagination(items, 10);
+  const processedPage = usePagination(processed, 10);
 
   return (
     <div className="space-y-6">
@@ -86,7 +90,7 @@ function AdminValidationsPage() {
           </div>
         ) : (
           <ul className="space-y-3">
-            {items.map((p) => {
+            {pendingPage.pageItems.map((p) => {
               const ecart = p.prixFinal - p.prixPlancher;
               const ecartPct = (ecart / p.prixPlancher) * 100;
               const tier = validationTier(p.prixFinal, p.prixPlancher);
@@ -137,6 +141,7 @@ function AdminValidationsPage() {
             })}
           </ul>
         )}
+        <ListPagination page={pendingPage.page} pageCount={pendingPage.pageCount} onPageChange={pendingPage.setPage} />
       </section>
 
       {/* SECTION 2 — Historique : validées / rejetées + état de paiement */}
@@ -168,7 +173,7 @@ function AdminValidationsPage() {
                 </tr>
               </thead>
               <tbody>
-                {processed.map((p) => (
+                {processedPage.pageItems.map((p) => (
                   <tr key={p.auctionId} className="border-t border-border">
                     <td className="px-3 py-2">
                       <span className="font-mono text-xs text-primary">#{p.carId}</span>{" "}
@@ -198,6 +203,7 @@ function AdminValidationsPage() {
             </table>
           </div>
         )}
+        <ListPagination page={processedPage.page} pageCount={processedPage.pageCount} onPageChange={processedPage.setPage} />
       </section>
 
     </div>

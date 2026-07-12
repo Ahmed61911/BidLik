@@ -3,6 +3,8 @@ import { useMesNotifications, acheteurStore } from "@/lib/supabaseAcheteurStore"
 import { formatDateTime } from "@/lib/format";
 import { Bell, Trophy, AlertTriangle, Wallet, Info, Clock } from "lucide-react";
 import type { NotifType } from "@/types/acheteur";
+import { usePagination } from "@/hooks/use-pagination";
+import { ListPagination } from "@/components/ListPagination";
 
 export const Route = createFileRoute("/acheteur/notifications")({
   component: NotificationsPage,
@@ -20,6 +22,7 @@ const ICON: Record<NotifType, React.ReactNode> = {
 function NotificationsPage() {
   const notifs = useMesNotifications();
   const unread = notifs.filter((n) => !n.read).length;
+  const { page, setPage, pageCount, pageItems: paged } = usePagination(notifs, 15);
 
   return (
     <div className="space-y-4">
@@ -43,7 +46,7 @@ function NotificationsPage() {
         </div>
       ) : (
         <ul className="overflow-hidden rounded-2xl border border-border bg-card divide-y divide-border">
-          {notifs.map((n) => (
+          {paged.map((n) => (
             <li
               key={n.id}
               onClick={() => !n.read && acheteurStore.markRead(n.id)}
@@ -67,6 +70,7 @@ function NotificationsPage() {
           ))}
         </ul>
       )}
+      <ListPagination page={page} pageCount={pageCount} onPageChange={setPage} />
     </div>
   );
 }

@@ -4,6 +4,8 @@ import { Trophy, Truck, CheckCircle2, XCircle, Clock } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { formatMad } from "@/lib/format";
 import { DeadlineCountdown } from "@/components/DeadlineCountdown";
+import { usePagination } from "@/hooks/use-pagination";
+import { ListPagination } from "@/components/ListPagination";
 
 export const Route = createFileRoute("/acheteur/gagnees/")({
   component: MesVoituresGagneesPage,
@@ -78,6 +80,7 @@ function MesVoituresGagneesPage() {
   withStatus.forEach((r) => { counts[r._s] += 1; });
 
   const list = tab === "all" ? withStatus : withStatus.filter((r) => r._s === tab);
+  const { page, setPage, pageCount, pageItems: paged } = usePagination(list, 10);
 
   return (
     <div className="space-y-4">
@@ -118,7 +121,7 @@ function MesVoituresGagneesPage() {
         </div>
       ) : (
         <ul className="grid gap-3">
-          {list.map((r) => (
+          {paged.map((r) => (
             <li
               key={r.auction_id}
               className="rounded-2xl border border-border bg-card p-4 shadow-sm transition-shadow hover:shadow-md"
@@ -181,6 +184,7 @@ function MesVoituresGagneesPage() {
           ))}
         </ul>
       )}
+      <ListPagination page={page} pageCount={pageCount} onPageChange={setPage} />
     </div>
   );
 }

@@ -15,6 +15,8 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { usePagination } from "@/hooks/use-pagination";
+import { ListPagination } from "@/components/ListPagination";
 
 export const Route = createFileRoute("/admin/encheres")({
   component: AdminCreateAuctionPage,
@@ -43,6 +45,9 @@ function AdminCreateAuctionPage() {
     });
   };
   useEffect(refresh, []);
+
+  const readyCarsPage = usePagination(cars, 10);
+  const liveAuctionsPage = usePagination(liveAuctions, 10);
 
   return (
     <div className="space-y-4">
@@ -98,7 +103,7 @@ function AdminCreateAuctionPage() {
         </div>
       ) : (
         <ul className="grid gap-3 sm:grid-cols-2">
-          {cars.map((c) => (
+          {readyCarsPage.pageItems.map((c) => (
             <li key={c.id} className="rounded-xl border border-border bg-card p-4 shadow-sm">
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0">
@@ -121,6 +126,7 @@ function AdminCreateAuctionPage() {
           ))}
         </ul>
       )}
+      <ListPagination page={readyCarsPage.page} pageCount={readyCarsPage.pageCount} onPageChange={readyCarsPage.setPage} />
 
       <div className="pt-4">
         <h2 className="text-lg font-semibold text-foreground">Enchères en cours</h2>
@@ -137,7 +143,7 @@ function AdminCreateAuctionPage() {
         <>
           {/* Mobile cards */}
           <ul className="space-y-2 md:hidden">
-            {liveAuctions.map((a) => {
+            {liveAuctionsPage.pageItems.map((a) => {
               const scheduled = a.status === "scheduled";
               return (
                 <li key={a.id} className="rounded-xl border border-border bg-card p-3 shadow-sm">
@@ -177,7 +183,7 @@ function AdminCreateAuctionPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {liveAuctions.map((a) => {
+                {liveAuctionsPage.pageItems.map((a) => {
                   const scheduled = a.status === "scheduled";
                   return (
                     <TableRow key={a.id}>
@@ -231,6 +237,7 @@ function AdminCreateAuctionPage() {
           </div>
         </>
       )}
+      <ListPagination page={liveAuctionsPage.page} pageCount={liveAuctionsPage.pageCount} onPageChange={liveAuctionsPage.setPage} />
 
       {showMultiDialog && (
         <MultiCarEventDialog

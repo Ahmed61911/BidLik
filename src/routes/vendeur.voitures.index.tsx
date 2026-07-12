@@ -5,6 +5,8 @@ import type { SellerCar } from "@/types/vendeur";
 import { formatMad, priceTier, priceTierTextClass, type PriceTier } from "@/lib/format";
 import { STAGE_LABEL, STAGE_TONE } from "./vendeur.index";
 import { Dropdown } from "@/components/ui/dropdown";
+import { usePagination } from "@/hooks/use-pagination";
+import { ListPagination } from "@/components/ListPagination";
 
 export const Route = createFileRoute("/vendeur/voitures/")({
   component: VendeurCarsPage,
@@ -28,7 +30,7 @@ function VendeurCarsPage() {
     () => (filter === "all" ? cars : cars.filter((c) => c.stage === filter)),
     [cars, filter],
   );
-
+  const { page, setPage, pageCount, pageItems: paged } = usePagination(filtered, 10);
 
   return (
     <div className="space-y-4">
@@ -55,7 +57,7 @@ function VendeurCarsPage() {
         </div>
       ) : (
         <ul className="space-y-3">
-          {filtered.map((c) => {
+          {paged.map((c) => {
             const courant = c.prixCourant ?? c.prixFinal ?? 0;
             const tier = courant > 0 ? priceTier(courant, c.prixPlancher) : undefined;
             return (
@@ -114,6 +116,7 @@ function VendeurCarsPage() {
           })}
         </ul>
       )}
+      <ListPagination page={page} pageCount={pageCount} onPageChange={setPage} />
     </div>
   );
 }

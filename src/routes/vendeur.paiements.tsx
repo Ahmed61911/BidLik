@@ -3,6 +3,8 @@ import { useEffect, useState } from "react";
 import { supabaseVendeurApi } from "@/lib/supabaseVendeurApi";
 import type { SellerPayout } from "@/types/vendeur";
 import { formatMad } from "@/lib/format";
+import { usePagination } from "@/hooks/use-pagination";
+import { ListPagination } from "@/components/ListPagination";
 
 export const Route = createFileRoute("/vendeur/paiements")({
   component: VendeurPayoutsPage,
@@ -30,6 +32,7 @@ function VendeurPayoutsPage() {
     });
   }, []);
 
+  const { page, setPage, pageCount, pageItems: paged } = usePagination(payouts, 10);
   const totalNet = payouts.filter((p) => p.status === "vire").reduce((s, p) => s + p.net, 0);
   const enAttente = payouts.filter((p) => p.status === "en_attente").reduce((s, p) => s + p.net, 0);
 
@@ -58,7 +61,7 @@ function VendeurPayoutsPage() {
             Aucun paiement.
           </div>
         )}
-        {payouts.map((p) => (
+        {paged.map((p) => (
           <div key={p.id} className="rounded-xl border border-border bg-card p-4 shadow-sm">
             <div className="flex items-start justify-between gap-3">
               <div className="min-w-0">
@@ -106,7 +109,7 @@ function VendeurPayoutsPage() {
           <tbody>
             {loading && <tr><td colSpan={6} className="px-4 py-10 text-center text-muted-foreground">Chargement…</td></tr>}
             {!loading && payouts.length === 0 && <tr><td colSpan={6} className="px-4 py-10 text-center text-muted-foreground">Aucun paiement.</td></tr>}
-            {payouts.map((p) => (
+            {paged.map((p) => (
               <tr key={p.id} className="border-t border-border">
                 <td className="px-4 py-3 font-medium text-foreground"><span className="font-mono text-primary">#{p.carId}</span> — {p.carLabel}</td>
                 <td className="px-4 py-3">{formatMad(p.prixFinal)}</td>
@@ -123,6 +126,7 @@ function VendeurPayoutsPage() {
           </tbody>
         </table>
       </div>
+      <ListPagination page={page} pageCount={pageCount} onPageChange={setPage} />
     </div>
   );
 }

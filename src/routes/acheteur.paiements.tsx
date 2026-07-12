@@ -12,6 +12,8 @@ import {
 import { formatMad } from "@/lib/format";
 import { DeadlineCountdown } from "@/components/DeadlineCountdown";
 import { supabase } from "@/integrations/supabase/client";
+import { usePagination } from "@/hooks/use-pagination";
+import { ListPagination } from "@/components/ListPagination";
 
 async function openProof(path: string) {
   try {
@@ -89,7 +91,7 @@ function PaiementsPage() {
       })
       .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
   }, [paiements, query, typeFilter, statusFilter, dateFrom, dateTo, amountMin, amountMax]);
-
+  const { page, setPage, pageCount, pageItems: paged } = usePagination(filtered, 10);
 
   const refreshPending = () => {
     listMyPendingPaymentAuctions()
@@ -274,7 +276,7 @@ function PaiementsPage() {
         ) : (
           <>
             <div className="mt-3 space-y-3 sm:hidden">
-              {filtered.map((p) => (
+              {paged.map((p) => (
                 <article key={p.id} className="rounded-lg border border-border bg-background p-3">
                   <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0 flex-1">
@@ -318,7 +320,7 @@ function PaiementsPage() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-border">
-                  {filtered.map((p) => (
+                  {paged.map((p) => (
                     <tr key={p.id}>
                       <td className="py-3 pr-3 text-muted-foreground">
                         {new Date(p.date).toLocaleDateString("fr-MA")}
@@ -354,6 +356,7 @@ function PaiementsPage() {
                 </tbody>
               </table>
             </div>
+            <ListPagination page={page} pageCount={pageCount} onPageChange={setPage} />
           </>
         )}
       </div>

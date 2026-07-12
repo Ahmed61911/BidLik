@@ -130,6 +130,20 @@ function nextCarId(existing: string[]): string {
   return String(max + 1).padStart(5, "0");
 }
 
+function nextAuctionId(existing: string[]): string {
+  // Unlike car ids, existing auction ids include legacy non-sequential
+  // formats (e.g. "a1", or the old "{carId}-{timestamp}" scheme) — some of
+  // which start with digits (e.g. "00101-mrgwzu3g"). A bare parseInt() would
+  // read that leading run of digits as 101 and skew the sequence, so only
+  // ids that are ENTIRELY digits count toward the max.
+  const max = existing.reduce((m, id) => {
+    if (!/^\d+$/.test(id)) return m;
+    const n = parseInt(id, 10);
+    return n > m ? n : m;
+  }, 50);
+  return String(max + 1).padStart(3, "0");
+}
+
 /* ──────────────────────────── analytics ──────────────────────────── */
 
 async function getStats(): Promise<AdminStats> {
@@ -494,7 +508,9 @@ async function insertAuctionRow(car: CarRow, opts: CreateAuctionOpts) {
   const endsAt = new Date(startsAtMs + opts.durationHours * 3600_000).toISOString();
   const status = startsAtMs <= Date.now() ? "live" : "scheduled";
   const auctionType = opts.auctionType ?? "ouverte";
-  const id = `${car.id}-${Date.now().toString(36)}`;
+  const { data: existingAuctions, error: idErr } = await supabase.from("auctions").select("id");
+  if (idErr) throw new Error(idErr.message);
+  const id = nextAuctionId(((existingAuctions as { id: string }[]) ?? []).map((a) => a.id));
   const { error } = await supabase
     .from("auctions")
     .insert({

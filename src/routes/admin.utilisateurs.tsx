@@ -6,6 +6,8 @@ import { supabaseAdminApi } from "@/lib/supabaseAdminApi";
 import type { AdminUser, UserRole } from "@/types/admin";
 import { formatMad } from "@/lib/format";
 import { Dropdown } from "@/components/ui/dropdown";
+import { usePagination } from "@/hooks/use-pagination";
+import { ListPagination } from "@/components/ListPagination";
 
 export const Route = createFileRoute("/admin/utilisateurs")({
   component: AdminUsersPage,
@@ -43,6 +45,7 @@ function AdminUsersPage() {
       return u.nom.toLowerCase().includes(q) || u.email.toLowerCase().includes(q);
     });
   }, [users, role, query]);
+  const { page, setPage, pageCount, pageItems: paged } = usePagination(filtered, 10);
 
   return (
     <div className="space-y-4">
@@ -85,7 +88,7 @@ function AdminUsersPage() {
       <div className="space-y-2 md:hidden">
         {loading && <p className="rounded-md border border-dashed border-border p-6 text-center text-sm text-muted-foreground">Chargement…</p>}
         {!loading && filtered.length === 0 && <p className="rounded-md border border-dashed border-border p-6 text-center text-sm text-muted-foreground">Aucun utilisateur.</p>}
-        {filtered.map((u) => (
+        {paged.map((u) => (
           <div key={u.id} className="rounded-xl border border-border bg-card p-3 shadow-sm">
             <div className="flex items-start justify-between gap-2">
               <div className="min-w-0">
@@ -139,7 +142,7 @@ function AdminUsersPage() {
           <tbody>
             {loading && <tr><td colSpan={6} className="px-4 py-10 text-center text-muted-foreground">Chargement…</td></tr>}
             {!loading && filtered.length === 0 && <tr><td colSpan={6} className="px-4 py-10 text-center text-muted-foreground">Aucun utilisateur.</td></tr>}
-            {filtered.map((u) => (
+            {paged.map((u) => (
               <tr key={u.id} className="border-t border-border">
                 <td className="px-4 py-3">
                   <p className="font-medium text-foreground">{u.nom}</p>
@@ -188,6 +191,8 @@ function AdminUsersPage() {
           </tbody>
         </table>
       </div>
+
+      <ListPagination page={page} pageCount={pageCount} onPageChange={setPage} />
 
       {openCreate && (
         <CreateUserDialog

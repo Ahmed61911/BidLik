@@ -5,6 +5,8 @@ import { supabaseVendeurApi } from "@/lib/supabaseVendeurApi";
 import type { SellerCar } from "@/types/vendeur";
 import { formatMad, priceTier, priceTierTextClass, priceTierBgClass, type PriceTier } from "@/lib/format";
 import { STAGE_LABEL, STAGE_TONE } from "./vendeur.index";
+import { usePagination } from "@/hooks/use-pagination";
+import { ListPagination } from "@/components/ListPagination";
 
 export const Route = createFileRoute("/vendeur/encheres")({
   component: VendeurEncheresPage,
@@ -27,6 +29,7 @@ function VendeurEncheresPage() {
     () => cars.filter((c) => ACTIVE_STAGES.includes(c.stage) && c.auctionId),
     [cars],
   );
+  const { page, setPage, pageCount, pageItems: paged } = usePagination(auctions, 10);
 
   const totalCourant = auctions.reduce((s, c) => s + (c.prixCourant ?? 0), 0);
   const totalPlancher = auctions.reduce((s, c) => s + c.prixPlancher, 0);
@@ -51,7 +54,7 @@ function VendeurEncheresPage() {
         </div>
       ) : (
         <ul className="space-y-3">
-          {auctions.map((c) => {
+          {paged.map((c) => {
             const courant = c.prixCourant ?? 0;
             const tier = priceTier(courant, c.prixPlancher);
             const sousAttente = tier !== "above";
@@ -112,6 +115,7 @@ function VendeurEncheresPage() {
           })}
         </ul>
       )}
+      <ListPagination page={page} pageCount={pageCount} onPageChange={setPage} />
     </div>
   );
 }

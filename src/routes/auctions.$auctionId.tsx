@@ -10,6 +10,7 @@ import type { Auction, Bid } from "@/types/auction";
 import { formatMad, formatDateTime, formatDateTimePrecise, formatBidInterval, microsecondsBetween, listingPriceTier, priceTierTextClass, priceTierGradientClass, timeRemaining } from "@/lib/format";
 import { Countdown } from "@/components/Countdown";
 import { CarGallery } from "@/components/CarGallery";
+import { Lightbox } from "@/components/Lightbox";
 import { storage } from "@/lib/storage";
 import { resolveCarImageUrl } from "@/lib/carImages";
 import { SealedBidPanel } from "@/components/SealedBidPanel";
@@ -718,6 +719,8 @@ export function ExpertiseSection({
     { key: "electronique", label: "Électronique" },
   ];
 
+  const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
+
   // expertise.rapportUrl / expertImages are storage paths, not directly
   // usable as <a href> / <img src> — resolve each to a signed URL.
   const [rapportSignedUrl, setRapportSignedUrl] = useState<string | null>(null);
@@ -829,15 +832,15 @@ export function ExpertiseSection({
           </p>
           <div className="grid grid-cols-3 gap-2 sm:grid-cols-4">
             {expertise.expertImages.map((src, i) => (
-              <a
+              <button
                 key={i}
-                href={photoPreviews[src]}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="relative aspect-square overflow-hidden rounded-md border border-border"
+                type="button"
+                onClick={() => setLightboxIndex(i)}
+                aria-label={`Agrandir la photo d'expertise ${i + 1}`}
+                className="relative aspect-square cursor-zoom-in overflow-hidden rounded-md border border-border"
               >
                 <img src={photoPreviews[src]} alt={`Photo expertise ${i + 1}`} className="h-full w-full object-cover" />
-              </a>
+              </button>
             ))}
           </div>
         </div>
@@ -847,6 +850,16 @@ export function ExpertiseSection({
         <p className="mt-4 rounded-md border border-dashed border-border p-3 text-xs text-muted-foreground">
           🔒 Les photos d'expertise sont réservées à l'administrateur, au vendeur et à l'expert assigné.
         </p>
+      )}
+
+      {lightboxIndex !== null && expertise.expertImages && (
+        <Lightbox
+          images={expertise.expertImages.map((src) => photoPreviews[src])}
+          index={lightboxIndex}
+          onIndexChange={setLightboxIndex}
+          onClose={() => setLightboxIndex(null)}
+          alt="Photo d'expertise"
+        />
       )}
     </section>
   );

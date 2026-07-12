@@ -5,6 +5,8 @@ import { Check, X, FileText, ShieldCheck } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { supabaseAdminPaiements, type AdminPayment, type AdminPaymentStatus } from "@/lib/supabaseAdminPaiements";
 import { formatMad } from "@/lib/format";
+import { usePagination } from "@/hooks/use-pagination";
+import { ListPagination } from "@/components/ListPagination";
 
 export const Route = createFileRoute("/admin/cautions")({
   head: () => ({
@@ -57,6 +59,7 @@ function AdminCautionsPage() {
     () => (filter === "all" ? items : items.filter((p) => p.status === "en_attente")),
     [items, filter],
   );
+  const { page, setPage, pageCount, pageItems: paged } = usePagination(filtered, 10);
 
   const pendingTotal = useMemo(
     () => items.filter((p) => p.status === "en_attente").reduce((s, p) => s + p.amount, 0),
@@ -167,7 +170,7 @@ function AdminCautionsPage() {
         </div>
       ) : (
         <ul className="space-y-3">
-          {filtered.map((p) => (
+          {paged.map((p) => (
             <li key={p.id} className="rounded-xl border border-border bg-card p-4 shadow-sm">
               <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
                 <div className="min-w-0 flex-1">
@@ -236,6 +239,7 @@ function AdminCautionsPage() {
           ))}
         </ul>
       )}
+      <ListPagination page={page} pageCount={pageCount} onPageChange={setPage} />
 
       {refundTarget && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">

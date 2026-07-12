@@ -11,6 +11,8 @@ import {
 } from "@/lib/supabaseAdminPaiements";
 import type { AdminUser } from "@/types/admin";
 import { formatMad } from "@/lib/format";
+import { usePagination } from "@/hooks/use-pagination";
+import { ListPagination } from "@/components/ListPagination";
 
 export const Route = createFileRoute("/admin/paiements")({
   component: AdminPaiementsPage,
@@ -148,6 +150,8 @@ function AdminPaiementsPage() {
     [items, filter, directionFilter, typeFilter, userFilter, dateFrom, dateTo, amountMin, amountMax, query],
   );
 
+  const { page, setPage, pageCount, pageItems: pagedFiltered } = usePagination(filtered, 10);
+
   const resetFilters = () => {
     setFilter("all");
     setDirectionFilter("all");
@@ -161,9 +165,16 @@ function AdminPaiementsPage() {
   };
 
   const totals = useMemo(() => {
-    const pending = items.filter((p) => p.status === "en_attente").reduce((s, p) => s + p.amount, 0);
-    const paid = items.filter((p) => p.status === "paye").reduce((s, p) => s + p.amount, 0);
-    return { pending, paid };
+    const isAcheteur = (p: AdminPayment) => p.type === "achat" || p.type === "caution";
+    const isVendeur = (p: AdminPayment) => p.type === "virement_vendeur";
+    const sum = (pred: (p: AdminPayment) => boolean) =>
+      items.filter(pred).reduce((s, p) => s + p.amount, 0);
+    return {
+      pendingAcheteur: sum((p) => isAcheteur(p) && p.status === "en_attente"),
+      pendingVendeur: sum((p) => isVendeur(p) && p.status === "en_attente"),
+      paidAcheteur: sum((p) => isAcheteur(p) && p.status === "paye"),
+      paidVendeur: sum((p) => isVendeur(p) && p.status === "paye"),
+    };
   }, [items]);
 
   const openProof = async (path: string) => {
@@ -220,8 +231,24 @@ function AdminPaiementsPage() {
       </div>
 
       <div className="grid gap-3 sm:grid-cols-2">
-        <Card label="En attente" value={formatMad(totals.pending)} tone="warn" />
-        <Card label="Réglé" value={formatMad(totals.paid)} tone="ok" />
+        <div className="rounded-xl border border-border bg-card p-4 shadow-sm">
+          <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+            En attente
+          </p>
+          <div className="grid grid-cols-2 gap-3">
+            <Card label="Acheteur" value={formatMad(totals.pendingAcheteur)} tone="orange" />
+            <Card label="Vendeur" value={formatMad(totals.pendingVendeur)} tone="red" />
+          </div>
+        </div>
+        <div className="rounded-xl border border-border bg-card p-4 shadow-sm">
+          <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+            Réglé
+          </p>
+          <div className="grid grid-cols-2 gap-3">
+            <Card label="Acheteur" value={formatMad(totals.paidAcheteur)} tone="ok" />
+            <Card label="Vendeur" value={formatMad(totals.paidVendeur)} tone="ok" />
+          </div>
+        </div>
       </div>
 
       {/* Paiements acheteurs à vérifier */}
@@ -424,7 +451,7 @@ function AdminPaiementsPage() {
               </tr>
             </thead>
             <tbody>
-              {filtered.map((p) => {
+              {pagedFiltered.map((p) => {
                 const dir = DIRECTION_BY_TYPE[p.type];
                 return (
                 <tr key={p.id} className="border-t border-border align-top">
@@ -500,6 +527,8 @@ function AdminPaiementsPage() {
         </div>
       )}
 
+      <ListPagination page={page} pageCount={pageCount} onPageChange={setPage} />
+
       {editing && (
         <PaymentDialog
           users={users}
@@ -515,13 +544,19 @@ function AdminPaiementsPage() {
   );
 }
 
-function Card({ label, value, tone }: { label: string; value: string; tone?: "warn" | "ok" }) {
+function Card({ label, value, tone }: { label: string; value: string; tone?: "orange" | "red" | "ok" }) {
   return (
-    <div className="rounded-xl border border-border bg-card p-4 shadow-sm">
+    <div className="rounded-lg border border-border bg-background p-3">
       <p className="text-xs uppercase tracking-wider text-muted-foreground">{label}</p>
       <p
-        className={`mt-1 text-xl font-bold ${
-          tone === "warn" ? "text-amber-600" : tone === "ok" ? "text-emerald-600" : "text-foreground"
+        className={`mt-1 text-lg font-bold ${
+          tone === "orange"
+            ? "text-orange-600"
+            : tone === "red"
+              ? "text-red-600"
+              : tone === "ok"
+                ? "text-emerald-600"
+                : "text-foreground"
         }`}
       >
         {value}

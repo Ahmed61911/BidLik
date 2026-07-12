@@ -11,6 +11,8 @@ import { BODY_TYPES } from "@/types/auction";
 import { formatMad } from "@/lib/format";
 import { Dropdown } from "@/components/ui/dropdown";
 import { CAR_CATALOG, CAR_MAKES } from "@/lib/carCatalog";
+import { usePagination } from "@/hooks/use-pagination";
+import { ListPagination } from "@/components/ListPagination";
 
 export const Route = createFileRoute("/admin/voitures")({
   component: AdminCarsPage,
@@ -54,6 +56,7 @@ function AdminCarsPage() {
       c.vendeurNom.toLowerCase().includes(q)
     );
   });
+  const { page, setPage, pageCount, pageItems: paged } = usePagination(filtered, 10);
 
   return (
     <div className="space-y-4">
@@ -82,7 +85,7 @@ function AdminCarsPage() {
       <div className="space-y-2 md:hidden">
         {loading && <p className="rounded-md border border-dashed border-border p-6 text-center text-sm text-muted-foreground">Chargement…</p>}
         {!loading && filtered.length === 0 && <p className="rounded-md border border-dashed border-border p-6 text-center text-sm text-muted-foreground">Aucune voiture trouvée.</p>}
-        {filtered.map((c) => (
+        {paged.map((c) => (
           <div
             key={c.id}
             onClick={() => setPreviewing(c)}
@@ -149,7 +152,7 @@ function AdminCarsPage() {
             {!loading && filtered.length === 0 && (
               <tr><td colSpan={10} className="px-4 py-10 text-center text-sm text-muted-foreground">Aucune voiture trouvée.</td></tr>
             )}
-            {filtered.map((c) => (
+            {paged.map((c) => (
               <tr
                 key={c.id}
                 onClick={() => setPreviewing(c)}
@@ -196,6 +199,8 @@ function AdminCarsPage() {
           </tbody>
         </table>
       </div>
+
+      <ListPagination page={page} pageCount={pageCount} onPageChange={setPage} />
 
       {open && <CarFormDialog onClose={() => setOpen(false)} onSaved={() => { setOpen(false); refresh(); }} />}
       {editing && <CarFormDialog existing={editing} onClose={() => setEditing(null)} onSaved={() => { setEditing(null); refresh(); }} />}

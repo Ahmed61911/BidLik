@@ -4,6 +4,8 @@ import { toast } from "sonner";
 import { supabaseAdminApi } from "@/lib/supabaseAdminApi";
 import type { Expert, ExpertAssignment } from "@/types/admin";
 import { Dropdown } from "@/components/ui/dropdown";
+import { usePagination } from "@/hooks/use-pagination";
+import { ListPagination } from "@/components/ListPagination";
 
 export const Route = createFileRoute("/admin/experts")({
   component: AdminExpertsPage,
@@ -26,6 +28,9 @@ function AdminExpertsPage() {
 
   const unassigned = useMemo(() => assignments.filter((a) => a.status === "non_assigne"), [assignments]);
   const inProgress = useMemo(() => assignments.filter((a) => a.status === "en_inspection"), [assignments]);
+  const unassignedPage = usePagination(unassigned, 10);
+  const inProgressPage = usePagination(inProgress, 10);
+  const expertsPage = usePagination(experts, 10);
 
   return (
     <div className="space-y-6">
@@ -42,7 +47,7 @@ function AdminExpertsPage() {
           <p className="rounded-md border border-dashed border-border p-6 text-center text-sm text-muted-foreground">Aucune inspection en attente.</p>
         ) : (
           <ul className="space-y-2">
-            {unassigned.map((a) => (
+            {unassignedPage.pageItems.map((a) => (
               <li key={a.id} className="flex flex-col gap-2 rounded-md border border-border p-3 sm:flex-row sm:items-center sm:justify-between">
                 <p className="text-sm font-medium text-foreground"><span className="font-mono text-primary">#{a.carId}</span> — {a.carLabel}</p>
                 <div className="flex items-center gap-2">
@@ -74,6 +79,7 @@ function AdminExpertsPage() {
             ))}
           </ul>
         )}
+        <ListPagination page={unassignedPage.page} pageCount={unassignedPage.pageCount} onPageChange={unassignedPage.setPage} />
       </section>
 
       <section className="rounded-xl border border-border bg-card p-4 shadow-sm">
@@ -82,7 +88,7 @@ function AdminExpertsPage() {
           <p className="rounded-md border border-dashed border-border p-6 text-center text-sm text-muted-foreground">Aucune inspection en cours.</p>
         ) : (
           <ul className="space-y-2">
-            {inProgress.map((a) => (
+            {inProgressPage.pageItems.map((a) => (
               <li key={a.id} className="flex flex-col gap-2 rounded-md border border-border p-3 sm:flex-row sm:items-center sm:justify-between">
                 <div>
                   <p className="text-sm font-medium text-foreground"><span className="font-mono text-primary">#{a.carId}</span> — {a.carLabel}</p>
@@ -118,13 +124,14 @@ function AdminExpertsPage() {
             ))}
           </ul>
         )}
+        <ListPagination page={inProgressPage.page} pageCount={inProgressPage.pageCount} onPageChange={inProgressPage.setPage} />
       </section>
 
       <section className="rounded-xl border border-border bg-card shadow-sm">
         <h3 className="border-b border-border px-4 py-3 text-sm font-semibold text-foreground">Tous les experts</h3>
         {/* Mobile cards */}
         <ul className="divide-y divide-border md:hidden">
-          {experts.map((ex) => (
+          {expertsPage.pageItems.map((ex) => (
             <li key={ex.id} className="p-3">
               <div className="flex items-start justify-between gap-2">
                 <div className="min-w-0">
@@ -157,7 +164,7 @@ function AdminExpertsPage() {
               </tr>
             </thead>
             <tbody>
-              {experts.map((ex) => (
+              {expertsPage.pageItems.map((ex) => (
                 <tr key={ex.id} className="border-t border-border">
                   <td className="px-4 py-3">
                     <p className="font-medium text-foreground">{ex.nom}</p>
@@ -176,6 +183,9 @@ function AdminExpertsPage() {
               ))}
             </tbody>
           </table>
+        </div>
+        <div className="p-3">
+          <ListPagination page={expertsPage.page} pageCount={expertsPage.pageCount} onPageChange={expertsPage.setPage} />
         </div>
       </section>
     </div>

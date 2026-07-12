@@ -2,6 +2,8 @@ import { createFileRoute, Link, Outlet, useRouterState } from "@tanstack/react-r
 import { useEffect, useMemo, useState } from "react";
 import { supabaseExpertApi } from "@/lib/supabaseExpertApi";
 import type { ExpertInspection } from "@/types/expert";
+import { usePagination } from "@/hooks/use-pagination";
+import { ListPagination } from "@/components/ListPagination";
 
 export const Route = createFileRoute("/expert/inspections")({
   component: ExpertInspectionsLayout,
@@ -29,6 +31,7 @@ function ExpertInspectionsPage() {
     () => (filter === "all" ? items : items.filter((i) => i.stage === filter)),
     [items, filter],
   );
+  const { page, setPage, pageCount, pageItems: paged } = usePagination(filtered, 10);
 
   return (
     <div className="space-y-4">
@@ -61,7 +64,7 @@ function ExpertInspectionsPage() {
         </div>
       ) : (
         <ul className="space-y-3">
-          {filtered.map((i) => (
+          {paged.map((i) => (
             <li key={i.id} className="rounded-xl border border-border bg-card p-4 shadow-sm">
               <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
                 <div className="min-w-0 flex-1">
@@ -97,6 +100,7 @@ function ExpertInspectionsPage() {
           ))}
         </ul>
       )}
+      <ListPagination page={page} pageCount={pageCount} onPageChange={setPage} />
     </div>
   );
 }

@@ -2,6 +2,8 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { supabaseExpertApi } from "@/lib/supabaseExpertApi";
 import type { ExpertInspection } from "@/types/expert";
+import { usePagination } from "@/hooks/use-pagination";
+import { ListPagination } from "@/components/ListPagination";
 
 export const Route = createFileRoute("/expert/historique")({
   component: ExpertHistoryPage,
@@ -24,6 +26,7 @@ function ExpertHistoryPage() {
       setLoading(false);
     });
   }, []);
+  const { page, setPage, pageCount, pageItems: paged } = usePagination(items, 10);
 
   return (
     <div className="space-y-4">
@@ -44,7 +47,7 @@ function ExpertHistoryPage() {
             Aucun rapport.
           </div>
         )}
-        {items.map((i) => (
+        {paged.map((i) => (
           <Link
             key={i.id}
             to="/expert/inspections/$inspectionId"
@@ -86,7 +89,7 @@ function ExpertHistoryPage() {
           <tbody>
             {loading && <tr><td colSpan={4} className="px-4 py-10 text-center text-muted-foreground">Chargement…</td></tr>}
             {!loading && items.length === 0 && <tr><td colSpan={4} className="px-4 py-10 text-center text-muted-foreground">Aucun rapport.</td></tr>}
-            {items.map((i) => (
+            {paged.map((i) => (
               <tr
                 key={i.id}
                 onClick={() => navigate({ to: "/expert/inspections/$inspectionId", params: { inspectionId: i.id } })}
@@ -105,6 +108,7 @@ function ExpertHistoryPage() {
           </tbody>
         </table>
       </div>
+      <ListPagination page={page} pageCount={pageCount} onPageChange={setPage} />
     </div>
   );
 }

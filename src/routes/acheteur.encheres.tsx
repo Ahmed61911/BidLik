@@ -4,6 +4,8 @@ import { useMesEncheres } from "@/lib/supabaseAcheteurStore";
 import { formatMad, buyerPriceTier, buyerPriceTierTextClass } from "@/lib/format";
 import { Countdown } from "@/components/Countdown";
 import type { EnchereStatus } from "@/types/acheteur";
+import { usePagination } from "@/hooks/use-pagination";
+import { ListPagination } from "@/components/ListPagination";
 
 export const Route = createFileRoute("/acheteur/encheres")({
   component: MesEncheresPage,
@@ -22,6 +24,7 @@ function MesEncheresPage() {
   const [tab, setTab] = useState<"all" | EnchereStatus>("all");
 
   const list = tab === "all" ? encheres : encheres.filter((e) => e.status === tab);
+  const { page, setPage, pageCount, pageItems: paged } = usePagination(list, 10);
 
   return (
     <div className="space-y-4">
@@ -56,7 +59,7 @@ function MesEncheresPage() {
         </div>
       ) : (
         <ul className="grid gap-3">
-          {list.map((e) => (
+          {paged.map((e) => (
             <li
               key={e.auctionId}
               className="rounded-2xl border border-border bg-card p-4 shadow-sm transition-shadow hover:shadow-md"
@@ -102,6 +105,7 @@ function MesEncheresPage() {
           ))}
         </ul>
       )}
+      <ListPagination page={page} pageCount={pageCount} onPageChange={setPage} />
     </div>
   );
 }

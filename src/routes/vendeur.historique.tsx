@@ -4,6 +4,8 @@ import { History, CheckCircle2, XCircle, TrendingUp } from "lucide-react";
 import { supabaseVendeurApi } from "@/lib/supabaseVendeurApi";
 import type { SellerCar, SellerPayout } from "@/types/vendeur";
 import { formatMad } from "@/lib/format";
+import { usePagination } from "@/hooks/use-pagination";
+import { ListPagination } from "@/components/ListPagination";
 import { STAGE_LABEL, STAGE_TONE } from "./vendeur.index";
 
 export const Route = createFileRoute("/vendeur/historique")({
@@ -32,6 +34,8 @@ function VendeurHistoriquePage() {
         .sort((a, b) => (a.soumisLe < b.soumisLe ? 1 : -1)),
     [cars],
   );
+  const pastPage = usePagination(past, 10);
+  const payoutsPage = usePagination(payouts, 10);
 
   const ventes = past.filter((c) => c.stage === "vendu");
   const totalVentes = ventes.reduce((s, c) => s + (c.prixFinal ?? 0), 0);
@@ -57,7 +61,7 @@ function VendeurHistoriquePage() {
         </div>
       ) : (
         <ul className="space-y-3">
-          {past.map((c) => {
+          {pastPage.pageItems.map((c) => {
             const isVendu = c.stage === "vendu";
             const Icon = isVendu ? CheckCircle2 : XCircle;
             return (
@@ -99,12 +103,13 @@ function VendeurHistoriquePage() {
           })}
         </ul>
       )}
+      <ListPagination page={pastPage.page} pageCount={pastPage.pageCount} onPageChange={pastPage.setPage} />
 
       {payouts.length > 0 && (
         <section className="rounded-xl border border-border bg-card p-4 shadow-sm">
           <h3 className="mb-3 text-sm font-semibold text-foreground">Versements</h3>
           <ul className="divide-y divide-border">
-            {payouts.map((p) => (
+            {payoutsPage.pageItems.map((p) => (
               <li key={p.id} className="flex flex-col gap-1 py-3 sm:flex-row sm:items-center sm:justify-between">
                 <div className="min-w-0">
                   <p className="text-sm font-medium text-foreground"><span className="font-mono text-primary">#{p.carId}</span> — {p.carLabel}</p>
@@ -129,6 +134,7 @@ function VendeurHistoriquePage() {
               </li>
             ))}
           </ul>
+          <ListPagination page={payoutsPage.page} pageCount={payoutsPage.pageCount} onPageChange={payoutsPage.setPage} />
         </section>
       )}
     </div>

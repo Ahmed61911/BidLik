@@ -9,6 +9,8 @@ import { requireRole } from "@/lib/routeGuard";
 import { useAuth } from "@/lib/auth";
 import { supabaseVendeurApi } from "@/lib/supabaseVendeurApi";
 import { AuthGate } from "@/components/AuthGate";
+import { usePagination } from "@/hooks/use-pagination";
+import { ListPagination } from "@/components/ListPagination";
 
 type Filter = "live" | "scheduled" | "closed";
 type Search = { filter?: Filter };
@@ -63,6 +65,7 @@ function AuctionsPage() {
     };
     void load();
   }, [filter, isVendeurOnly]);
+  const { page, setPage, pageCount, pageItems: paged } = usePagination(events, 12);
 
   return (
     <AuthGate roles={["acheteur", "admin", "vendeur"]}>
@@ -99,7 +102,7 @@ function AuctionsPage() {
         </div>
       ) : (
         <ul className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-          {events.map((ev) => {
+          {paged.map((ev) => {
             const isLive = ev.status === "live";
             const isScheduled = ev.status === "scheduled";
             const isClosed = !isLive && !isScheduled;
@@ -168,6 +171,7 @@ function AuctionsPage() {
           })}
         </ul>
       )}
+      <ListPagination page={page} pageCount={pageCount} onPageChange={setPage} />
     </div>
     </AuthGate>
   );
