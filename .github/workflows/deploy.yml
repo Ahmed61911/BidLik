@@ -3,8 +3,10 @@ name: CI/CD
 on:
   push:
     branches: [main]
+    paths-ignore: [mobile/**]
   pull_request:
     branches: [main]
+    paths-ignore: [mobile/**]
   # Lets you trigger a run on demand from the Actions tab (e.g. to redeploy
   # without a new commit) — see the "Run workflow" button.
   workflow_dispatch:
