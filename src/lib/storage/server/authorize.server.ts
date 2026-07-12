@@ -42,15 +42,8 @@ async function isAssignedExpert(userId: string, carId: string): Promise<boolean>
   return !!data && data.expert_id === userId;
 }
 
-async function isWinningBuyer(userId: string, carId: string): Promise<boolean> {
-  const { data } = await supabaseAdmin
-    .from("auctions")
-    .select("id")
-    .eq("car_id", carId)
-    .eq("top_bidder_id", userId)
-    .in("status", ["validated", "closed"])
-    .limit(1);
-  return !!data && data.length > 0;
+async function isAcheteur(userId: string): Promise<boolean> {
+  return hasRole(userId, "acheteur");
 }
 
 /** Can `userId` upload a new file at `path` in `bucket`? */
@@ -95,15 +88,14 @@ export async function canRead(
   if (await isAdmin(userId)) return true;
   if (owner === userId) return true;
 
-  // Expertise photos: restricted to admin, the car's own vendeur, and its
-  // assigned expert (see get_car_expertise() RPC — matches
-  // auctions.$auctionId.tsx's canPreviewPhotos, which now derives directly
-  // from whether that RPC returned expert_images at all). Buyers no longer
-  // get a blanket bypass here.
+  // Expertise report + photos: admin, the car's own vendeur, its assigned
+  // expert, and any acheteur (see get_car_expertise() RPC — matches
+  // auctions.$auctionId.tsx's canPreviewPhotos, which derives directly from
+  // whether that RPC returned expert_images at all).
   if (carId) {
     if (await isCarOwner(userId, carId)) return true;
     if (await isAssignedExpert(userId, carId)) return true;
-    if (category === "report" && (await isWinningBuyer(userId, carId))) return true;
+    if ((category === "report" || category === "expertise") && (await isAcheteur(userId))) return true;
   }
   return false;
 }
