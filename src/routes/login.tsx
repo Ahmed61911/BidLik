@@ -1,7 +1,8 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
+import { Eye, EyeOff } from "lucide-react";
 import { toast } from "sonner";
-import { authStore, DEMO_ACCOUNTS, ROLE_HOME, useAuth } from "@/lib/auth";
+import { authStore, ROLE_HOME, useAuth } from "@/lib/auth";
 import type { Role } from "@/types/auth";
 
 
@@ -116,19 +117,6 @@ function LoginPage() {
     }
   };
 
-  const fillDemo = async (email: string, password: string) => {
-    const form = document.querySelector<HTMLFormElement>("#auth-form");
-    if (!form) return;
-    (form.elements.namedItem("phone") as HTMLInputElement).value = email;
-    (form.elements.namedItem("password") as HTMLInputElement).value = password;
-    // Ensure the demo accounts exist (idempotent seed).
-    try {
-      await fetch("/api/public/seed-demo", { method: "POST" });
-    } catch {
-      /* ignore */
-    }
-  };
-
   return (
     <div className="mx-auto flex max-w-md flex-col px-4 py-12 sm:px-6">
       <div className="rounded-2xl border border-border bg-card p-6 shadow-[var(--shadow-elevated)] sm:p-8">
@@ -166,30 +154,6 @@ function LoginPage() {
           </button>
         </form>
 
-        {mode === "login" && (
-          <div className="mt-6 border-t border-border pt-4">
-            <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-              Comptes de démonstration
-            </p>
-            <div className="mt-2 grid gap-1.5">
-              {DEMO_ACCOUNTS.map((a) => (
-                <button
-                  key={a.email}
-                  type="button"
-                  onClick={() => fillDemo(a.email, a.password)}
-                  className="flex items-center justify-between rounded-md border border-border bg-background px-3 py-2 text-left text-xs hover:bg-secondary"
-                >
-                  <span className="font-medium text-foreground">
-                    {a.role}
-                    <span className="ml-2 font-normal text-muted-foreground">{a.phone}</span>
-                  </span>
-                  <span className="text-muted-foreground">mdp: {a.password}</span>
-                </button>
-              ))}
-            </div>
-          </div>
-        )}
-
         <p className="mt-6 border-t border-border pt-4 text-center text-xs text-muted-foreground">
           En continuant, vous acceptez les conditions générales d'utilisation de Bidlik.
         </p>
@@ -213,15 +177,35 @@ function Tab({ active, onClick, children }: { active: boolean; onClick: () => vo
 }
 
 function Field({ label, ...props }: { label: string } & React.InputHTMLAttributes<HTMLInputElement>) {
+  const [visible, setVisible] = useState(false);
+  const isPassword = props.type === "password";
+
   return (
     <label className="block">
       <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
         {label}
       </span>
-      <input
-        {...props}
-        className="mt-1 w-full rounded-lg border border-input bg-background px-3 py-2.5 text-sm text-foreground placeholder:text-muted-foreground focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/20"
-      />
+      <div className="relative mt-1">
+        <input
+          {...props}
+          type={isPassword ? (visible ? "text" : "password") : props.type}
+          className={[
+            "w-full rounded-lg border border-input bg-background px-3 py-2.5 text-sm text-foreground placeholder:text-muted-foreground focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/20",
+            isPassword ? "pr-10" : "",
+          ].join(" ")}
+        />
+        {isPassword && (
+          <button
+            type="button"
+            tabIndex={-1}
+            onClick={() => setVisible((v) => !v)}
+            aria-label={visible ? "Masquer le mot de passe" : "Afficher le mot de passe"}
+            className="absolute inset-y-0 right-0 flex items-center px-3 text-muted-foreground hover:text-foreground"
+          >
+            {visible ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+          </button>
+        )}
+      </div>
     </label>
   );
 }
