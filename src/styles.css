@@ -401,6 +401,26 @@
     animation: pulse-bid 600ms ease-out;
   }
 
+  /* Countdown running low — a radar-ping glow ring around the whole card,
+     distinct from the per-tick digit pulse (animate-pulse-bid). */
+  @keyframes urgent-glow {
+    0%,
+    100% {
+      box-shadow: 0 0 0 0 oklch(0.6 0.24 25 / 0.45);
+    }
+    50% {
+      box-shadow: 0 0 0 12px oklch(0.6 0.24 25 / 0);
+    }
+  }
+  .animate-urgent-glow {
+    animation: urgent-glow 1.1s ease-out infinite;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .animate-urgent-glow {
+      animation: none;
+    }
+  }
+
   @keyframes shimmer {
     0% {
       background-position: -200% 0;

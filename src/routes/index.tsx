@@ -16,6 +16,7 @@ import {
   Car,
 } from "lucide-react";
 import heroCarsRow from "@/assets/hero-car-lot.png";
+import { NextAuctionCountdown } from "@/components/NextAuctionCountdown";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -86,6 +87,8 @@ function HomeV3() {
           <div className="hidden md:block" />
         </div>
       </section>
+
+      <NextAuctionCountdown />
 
       {/* 4 PILIERS */}
       <section className="mx-auto max-w-7xl px-4 py-20 sm:px-6">
