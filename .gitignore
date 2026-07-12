@@ -37,3 +37,10 @@ coverage/
 *.njsproj
 *.sln
 *.sw?
+
+# Local scraping utility + its scraped output (not part of the app)
+/scripts/
+
+# Scratch files
+/scratch_next.json
+/scratch_page.html
