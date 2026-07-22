@@ -1,7 +1,7 @@
 // CMI (Centre Monétique Interbancaire) helpers — hash v3 (SHA512)
 // https://www.cmi.co.ma/ — NestPay / EST gateway
 
-import { createHash } from "crypto";
+import { createHash, timingSafeEqual } from "crypto";
 
 const EXCLUDED = new Set(["hash", "encoding"]);
 
@@ -34,5 +34,7 @@ export function verifyCmiCallback(
   const plain =
     keys.map((k) => escapeVal(body[k] ?? "")).join("|") + "|" + escapeVal(storeKey);
   const computed = createHash("sha512").update(plain, "utf8").digest("base64");
-  return computed === hash;
+  const a = Buffer.from(computed, "utf8");
+  const b = Buffer.from(hash, "utf8");
+  return a.length === b.length && timingSafeEqual(a, b);
 }

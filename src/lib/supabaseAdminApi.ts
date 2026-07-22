@@ -547,7 +547,8 @@ async function createAuctionFromCar(carId: string, opts: CreateAuctionOpts): Pro
   if (error) throw new Error(error.message);
   if (!car) throw new Error("Voiture introuvable");
   const carStatus = (car as CarRow).status;
-  if (carStatus !== "open" && carStatus !== "expertise") throw new Error("Cette voiture est déjà en enchère");
+  if (carStatus !== "open" && carStatus !== "expertise" && carStatus !== "vendu_annulee")
+    throw new Error("Cette voiture est déjà en enchère");
   const inserted = await insertAuctionRow(car as CarRow, opts);
   // Re-fetch full auction row via admin RPC
   const { data: fullAuction, error: aErr } = await supabase.rpc("admin_get_auction", { p_id: inserted.id });
@@ -610,7 +611,8 @@ async function createMultiCarEvent(input: {
   for (const it of input.items) {
     const car = carById.get(it.carId);
     if (!car) throw new Error(`Voiture ${it.carId} introuvable`);
-    if (car.status !== "open" && car.status !== "expertise") throw new Error(`Voiture ${it.carId} déjà en enchère`);
+    if (car.status !== "open" && car.status !== "expertise" && car.status !== "vendu_annulee")
+      throw new Error(`Voiture ${it.carId} déjà en enchère`);
     const r = await insertAuctionRow(car, {
       startingPrice: it.startingPrice,
       durationHours: input.durationHours,

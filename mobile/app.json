@@ -42,7 +42,8 @@
         {
           "faceIDPermission": "Utilisez Face ID pour déverrouiller Bidlik."
         }
-      ]
+      ],
+      "expo-audio"
     ],
     "extra": {
       "eas": {

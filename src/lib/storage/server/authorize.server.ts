@@ -91,11 +91,14 @@ export async function canRead(
   // Expertise report + photos: admin, the car's own vendeur, its assigned
   // expert, and any acheteur (see get_car_expertise() RPC — matches
   // auctions.$auctionId.tsx's canPreviewPhotos, which derives directly from
-  // whether that RPC returned expert_images at all).
-  if (carId) {
+  // whether that RPC returned expert_images at all). Scoped to these two
+  // categories only — a car's vendeur/expert has no business reading a
+  // buyer's payment proof just because it's tagged with the same carId for
+  // display/filtering purposes.
+  if (carId && (category === "report" || category === "expertise")) {
     if (await isCarOwner(userId, carId)) return true;
     if (await isAssignedExpert(userId, carId)) return true;
-    if ((category === "report" || category === "expertise") && (await isAcheteur(userId))) return true;
+    if (await isAcheteur(userId)) return true;
   }
   return false;
 }

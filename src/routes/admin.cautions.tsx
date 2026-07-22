@@ -61,6 +61,9 @@ function AdminCautionsPage() {
   );
   const { page, setPage, pageCount, pageItems: paged } = usePagination(filtered, 10);
 
+  const activeCautions = useMemo(() => items.filter((p) => p.status === "paye"), [items]);
+  const activePage = usePagination(activeCautions, 10);
+
   const pendingTotal = useMemo(
     () => items.filter((p) => p.status === "en_attente").reduce((s, p) => s + p.amount, 0),
     [items],
@@ -158,6 +161,66 @@ function AdminCautionsPage() {
         <Card label="En attente" value={formatMad(pendingTotal)} tone="warn" />
         <Card label="Cautions actives" value={formatMad(validatedTotal)} tone="ok" />
       </div>
+
+      {/* Cautions actives — toujours visible, indépendamment du filtre
+          ci-dessus, pour que le remboursement reste directement accessible. */}
+      {!loading && activeCautions.length > 0 && (
+        <section className="space-y-3">
+          <div>
+            <h3 className="text-base font-semibold text-foreground">Cautions actives</h3>
+            <p className="text-xs text-muted-foreground">
+              Cautions validées et actuellement détenues. Remboursez un acheteur qui quitte la plateforme ou n'a plus besoin de sa caution.
+            </p>
+          </div>
+          <ul className="space-y-3">
+            {activePage.pageItems.map((p) => (
+              <li key={p.id} className="rounded-xl border border-border bg-card p-4 shadow-sm">
+                <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+                  <div className="min-w-0 flex-1">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <p className="text-sm font-semibold text-foreground">
+                        {p.userNom ?? p.userEmail ?? "—"}
+                      </p>
+                      <span className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${STATUS_TONE[p.status]}`}>
+                        {STATUS_LABEL[p.status]}
+                      </span>
+                    </div>
+                    <p className="mt-0.5 text-xs text-muted-foreground">
+                      {p.userEmail ?? ""}
+                      {p.paymentMethod && <> · Mode <span className="font-medium">{p.paymentMethod}</span></>}
+                      {p.bank && <> · {p.bank}</>}
+                      {p.reference && <> · Réf {p.reference}</>}
+                    </p>
+                    <p className="mt-2 text-base font-bold text-foreground">{formatMad(p.amount)}</p>
+                    <p className="mt-1 text-[11px] text-muted-foreground">
+                      Validée le {new Date(p.paidAt ?? p.createdAt).toLocaleString("fr-MA")}
+                    </p>
+                    {p.proofUrl && (
+                      <button
+                        onClick={() => openProof(p.proofUrl!)}
+                        className="mt-2 inline-flex items-center gap-1 text-xs font-medium text-primary hover:underline"
+                      >
+                        <FileText className="h-3.5 w-3.5" />
+                        {p.proofName ?? "Voir le justificatif"}
+                      </button>
+                    )}
+                  </div>
+                  <div className="flex shrink-0 items-center gap-2">
+                    <button
+                      disabled={busyId === p.id}
+                      onClick={() => openRefund(p)}
+                      className="inline-flex h-9 items-center gap-1.5 rounded-md border border-border bg-background px-3 text-sm font-semibold text-foreground hover:bg-accent disabled:opacity-60"
+                    >
+                      Rembourser
+                    </button>
+                  </div>
+                </div>
+              </li>
+            ))}
+          </ul>
+          <ListPagination page={activePage.page} pageCount={activePage.pageCount} onPageChange={activePage.setPage} />
+        </section>
+      )}
 
       {loading ? (
         <p className="text-sm text-muted-foreground">Chargement…</p>

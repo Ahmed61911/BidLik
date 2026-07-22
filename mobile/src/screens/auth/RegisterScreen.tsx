@@ -6,6 +6,7 @@ import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useAuthStore } from "@/store/authStore";
+import { BidlikLogo } from "@/components/BidlikLogo";
 import { TextField } from "@/components/ui/TextField";
 import { Button } from "@/components/ui/Button";
 import { RoleSelector } from "@/components/ui/RoleSelector";
@@ -56,8 +57,11 @@ export function RegisterScreen() {
   return (
     <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : undefined} className="flex-1 bg-background">
       <ScrollView contentContainerClassName="px-6 py-10" keyboardShouldPersistTaps="handled">
-        <Text className="mb-1 text-3xl font-bold text-foreground">Créer un compte</Text>
-        <Text className="mb-6 text-base text-muted-foreground">Rejoignez Bidlik en quelques secondes</Text>
+        <View className="mb-6 items-center">
+          <BidlikLogo width={120} />
+        </View>
+        <Text className="mb-1 text-3xl font-bold text-foreground text-center">Créer un compte</Text>
+        <Text className="mb-6 text-base text-muted-foreground text-center">Rejoignez Bidlik en quelques secondes</Text>
 
         <Controller
           control={control}

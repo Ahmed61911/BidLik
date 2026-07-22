@@ -41,5 +41,9 @@ export async function getSignedUrl(bucket: StorageBucket, path: string, expiresI
     body: JSON.stringify({ bucket, path, expiresIn }),
   });
   const body = await parseJsonResponse(res);
-  return String(body.signedUrl);
+  // The webapp's signed-url endpoint intentionally returns a same-origin-relative
+  // path (e.g. "/api/storage/download?token=...") since on web it's always fetched
+  // by the browser tab already on the right origin. Mobile has no such origin —
+  // prefix it explicitly (mirrors resolveCarImageUrl's approach above).
+  return `${env.API_URL}${String(body.signedUrl)}`;
 }

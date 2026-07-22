@@ -4,6 +4,7 @@ import { Image } from "expo-image";
 import { FileText, Star } from "lucide-react-native";
 import type { CarExpertise } from "@/types";
 import { getSignedUrl } from "@/services/storage";
+import { ImageLightbox } from "@/components/ImageLightbox";
 
 const CRITERIA: { key: keyof NonNullable<CarExpertise["checklist"]>; label: string }[] = [
   { key: "carrosserie", label: "Carrosserie" },
@@ -18,6 +19,7 @@ export function ExpertiseSection({ expertise, canPreviewPhotos }: { expertise: C
   const c = expertise.checklist;
   const [rapportSignedUrl, setRapportSignedUrl] = useState<string | null>(null);
   const [photoPreviews, setPhotoPreviews] = useState<Record<string, string>>({});
+  const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -118,7 +120,7 @@ export function ExpertiseSection({ expertise, canPreviewPhotos }: { expertise: C
             {expertise.expertImages.map((src, i) => (
               <Pressable
                 key={src}
-                onPress={() => photoPreviews[src] && Linking.openURL(photoPreviews[src])}
+                onPress={() => photoPreviews[src] && setLightboxIndex(i)}
                 className="h-20 w-20 overflow-hidden rounded-md border border-border bg-secondary"
               >
                 {photoPreviews[src] ? (
@@ -134,6 +136,15 @@ export function ExpertiseSection({ expertise, canPreviewPhotos }: { expertise: C
         <Text className="mt-4 rounded-md border border-dashed border-border p-3 text-xs text-muted-foreground">
           Les photos d'expertise sont réservées à l'administrateur, au vendeur et à l'expert assigné.
         </Text>
+      ) : null}
+
+      {lightboxIndex !== null && expertise.expertImages ? (
+        <ImageLightbox
+          images={expertise.expertImages.map((src) => photoPreviews[src]).filter(Boolean)}
+          index={lightboxIndex}
+          onIndexChange={setLightboxIndex}
+          onClose={() => setLightboxIndex(null)}
+        />
       ) : null}
     </View>
   );

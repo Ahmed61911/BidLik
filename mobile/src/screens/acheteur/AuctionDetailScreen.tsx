@@ -8,6 +8,7 @@ import { useAuthStore } from "@/store/authStore";
 import { getAuction, listBids, getCarExpertise, placeBid as placeBidApi, setAutoBid, getAutoBid } from "@/services/supabase/auctionsApi";
 import { subscribeToAuction } from "@/services/realtime";
 import { scheduleAuctionEndingReminder } from "@/services/localNotifications";
+import { playBidPlacedSound, playOutbidSound } from "@/services/sounds";
 import { resolveCarImageUrl } from "@/services/storage";
 import type { Auction, Bid, CarExpertise } from "@/types";
 import { ImageGallery } from "@/components/ImageGallery";
@@ -97,6 +98,7 @@ export function AuctionDetailScreen() {
         const myId = userIdRef.current;
         if (myId && bid.bidderId !== myId && prev.topBidderId === myId) {
           toast.info("Vous avez été surenchéri", `Nouveau prix ${bid.amount} DH`);
+          playOutbidSound();
         } else if (myId && bid.bidderId === myId && bid.isAuto) {
           toast.success("Auto-enchère utilisée", `Nouvelle offre automatique de ${bid.amount} DH.`);
         }
@@ -179,6 +181,7 @@ export function AuctionDetailScreen() {
     try {
       await placeBidApi({ auctionId: auction.id, amount });
       toast.success("Offre placée", `Votre offre a été enregistrée.`);
+      playBidPlacedSound();
     } catch (e) {
       setAuction(prevAuction);
       setBids(prevBids);

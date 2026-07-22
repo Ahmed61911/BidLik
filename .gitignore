@@ -38,6 +38,13 @@ coverage/
 *.sln
 *.sw?
 
+# Secrets — real values, never commit (see .env.example / docker/.env.example
+# for the templates). Historical commits still contain leaked values; those
+# need rotating on the server and a separate history-rewrite decision.
+.env
+docker/.env
+*.env.bak
+
 # Local scraping utility + its scraped output (not part of the app)
 /scripts/
 

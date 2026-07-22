@@ -8,6 +8,7 @@ import { canWrite } from "@/lib/storage/server/authorize.server";
 import { writeStorageFile } from "@/lib/storage/server/fs.server";
 import { maxBytesFor } from "@/lib/storage/server/limits.server";
 import { CATEGORY_RULES } from "@/lib/storage/validation";
+import { parseUserIdFromPath } from "@/lib/storage/paths";
 import type { FileCategory, StorageBucket } from "@/lib/storage/types";
 
 const BUCKETS: readonly StorageBucket[] = ["car-images", "payment-proofs", "identity", "avatars"];
@@ -97,8 +98,19 @@ export const Route = createFileRoute("/api/storage/upload")({
               : (form.get("carId") ? String(form.get("carId")) : null);
           const originalFilename = String(form.get("originalFilename") ?? file.name ?? relativePath.split("/").pop());
 
+          // For payment-proofs/identity, the path already encodes the intended
+          // owner ({userId}/{uuid}.ext) — re-derive it from there rather than
+          // the uploader's own id, since an admin recording a proof "for" a
+          // buyer (e.g. a refund) uploads on the buyer's behalf, not their own.
+          // car-images has no such prefix (cars/{carId}/...), so it always
+          // falls back to the uploader.
+          const owner =
+            bucket === "payment-proofs" || bucket === "identity"
+              ? (parseUserIdFromPath(relativePath) ?? userId)
+              : userId;
+
           const { error: insertErr } = await supabaseAdmin.from("storage_files").insert({
-            owner: userId,
+            owner,
             car_id: carId,
             bucket,
             file_category: category,
